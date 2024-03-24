@@ -19,13 +19,35 @@ class User(BaseModel):  # Пользователь
 
     telegram_id = IntegerField(unique=True)
     sex = IntegerField(null=True, choices=SEX_CHOICES, default=2)
-    name = CharField()
-    surname = CharField
+    name = CharField(max_length=30)
+    surname = CharField(max_length=30)
     age = IntegerField()
 
 
-class Test(BaseModel):  # данные об исследовании
+class Test(BaseModel):  # Данные об исследовании
     user_id = ForeignKeyField(User, null=True)
     date = DateTimeField(null=True)
     text_info = TextField()
 
+
+class Specialist(BaseModel): # Данные о специалисте
+    field = CharField(max_length=50, null=True)
+
+
+class Result(BaseModel): # Результат исследования
+    test_id = ForeignKeyField(Test, null=True)
+    specialist_id = ForeignKeyField(Specialist, null=True)
+
+
+class Question(BaseModel):  # Вопрос
+    text = TextField()
+
+
+class Answer(BaseModel):  # Вариант ответа
+    text = TextField()
+    question = ForeignKeyField(Question)
+
+
+class UserAnswer(BaseModel):  # Связка варианта ответа и исследования
+    test_id = ForeignKeyField(Test, null=True)
+    answer_id = ForeignKeyField(Answer, null=True)
