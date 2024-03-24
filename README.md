@@ -1,9 +1,13 @@
 # Telemedicine Telegram Bot
 Repository for project on Telemedicine Hackaton (april 2024) - TG BOT
 
-Link to Drow.io table with database structure:
+Link to Draw.io table with database structure:
 
 https://drive.google.com/file/d/1OstF2gKEh5KA2smH5klzU-oOdTLsXb3a/view?usp=sharing
+
+Link to Draw.io table with project structure by Artem Kashtanov:
+
+https://drive.google.com/file/d/1mmMQbrImg2BvL1cesJt_iP2ouFpu1ue9/view
 
 RU:
 
