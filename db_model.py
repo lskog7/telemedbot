@@ -21,7 +21,7 @@ class User(BaseModel):  # Пользователь
     sex = IntegerField(null=True, choices=SEX_CHOICES, default=2)
     name = CharField(max_length=30)
     surname = CharField(max_length=30)
-    age = DateTimeField()
+    b_date = DateTimeField()
 
 
 class Test(BaseModel):  # Данные об исследовании
