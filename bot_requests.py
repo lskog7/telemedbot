@@ -12,28 +12,60 @@ class Requests:
     def write_user(telegram_id):
         u = User(telegram_id=telegram_id, sex=2)
         u.save()
-        return u
-
-    @staticmethod
-    def user_age(telegram_id):
-        u = User.select().where(User.telegram_id == telegram_id)
-        return int(u[0].age)
 
     @staticmethod
     def user_sex(telegram_id):
         u = User.select().where(User.telegram_id == telegram_id)
-        return int(u[0].sex)
+        return User.SEX_CHOICES[u[0].sex][1]
 
     @staticmethod
-    def save_user_age(telegram_id, age):
+    def user_name(telegram_id):
+        u = User.select().where(User.telegram_id == telegram_id)
+        return u[0].name
+
+    @staticmethod
+    def user_surname(telegram_id):
+        u = User.select().where(User.telegram_id == telegram_id)
+        return u[0].surname
+
+    @staticmethod
+    def user_patronymic(telegram_id):
+        u = User.select().where(User.telegram_id == telegram_id)
+        return u[0].patronymic
+
+    @staticmethod
+    def user_b_date(telegram_id):
+        u = User.select().where(User.telegram_id == telegram_id)
+        return u[0].b_date
+
+    @staticmethod
+    def save_user_name(telegram_id, name):
         u = User.get(User.telegram_id == telegram_id)
-        u.age = age
+        u.name = name
+        u.save()
+
+    @staticmethod
+    def save_user_surname(telegram_id, surname):
+        u = User.get(User.telegram_id == telegram_id)
+        u.surname = surname
+        u.save()
+
+    @staticmethod
+    def save_user_patronymic(telegram_id, patronymic):
+        u = User.get(User.telegram_id == telegram_id)
+        u.patronymic = patronymic
         u.save()
 
     @staticmethod
     def save_user_sex(telegram_id, sex):
         u = User.get(User.telegram_id == telegram_id)
         u.sex = sex
+        u.save()
+
+    @staticmethod
+    def save_user_b_date(telegram_id, date_str):
+        u = User.get(User.telegram_id == telegram_id)
+        u.b_date = date_str
         u.save()
 
 #     @staticmethod
