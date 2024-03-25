@@ -32,7 +32,7 @@ class Call:
         bot.edit_message_reply_markup(chat_id, message_id, reply_markup=menu_keyboard)
 
     @staticmethod
-    def parameters(user):
+    def parameters(user, message):
         sex = Requests.user_sex(user)
         name = Requests.user_name(user)
         surname = Requests.user_surname(user)
@@ -75,12 +75,12 @@ class Get:
         else:
             if surname.isalpha() and len(surname) < 31:
                 Requests.save_user_surname(user, surname)
-
                 bot.send_message(user, text=emoji() + f'Введите Ваше имя')
                 bot.register_next_step_handler(message, Get.start_name)
             else:
                 bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите фамилию ещё раз')
                 bot.register_next_step_handler(message, Get.start_surname)
+
 
     @staticmethod
     def start_name(message: Message):
