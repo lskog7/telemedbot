@@ -9,6 +9,9 @@ Link to Draw.io table with project structure by Artem Kashtanov:
 
 https://drive.google.com/file/d/1mmMQbrImg2BvL1cesJt_iP2ouFpu1ue9/view
 
+Link to Draw.io with questions structure:
+https://drive.google.com/file/d/15AS3R4-kOf25pf4wg6wfXvzSnE2p0zpe/view?usp=sharing
+
 RU:
 
 Задача: Разработка чат-бота для предварительной автоматической маршрутизации пациента
