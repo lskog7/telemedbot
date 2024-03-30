@@ -53,7 +53,7 @@ class Questions(BaseModel):  # Вопросы
 
 
 class Answers(BaseModel):  # Вариант ответа
-    quest_id = ForeignKeyField(Questions)
+    question_id = ForeignKeyField(Questions)
     answer = CharField(max_length=50)
 
 

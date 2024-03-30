@@ -3,7 +3,7 @@ from telebot.types import Message
 from bot_requests import *
 from telebot import types
 from datetime import datetime
-from db_model import User, Test, Specialist, Result, Question, Answer, UserAnswer
+from db_model import Users, Tests, Specialists, Results, Questions, Answers, UserAnswers
 from peewee import JOIN
 
 bot = telebot.TeleBot('7077776032:AAGJLvl7VZVzmGXDPX6nqIEbetTLSQcuJm8', num_threads=10)
