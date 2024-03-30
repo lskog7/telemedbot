@@ -32,7 +32,7 @@ class Call:
         bot.edit_message_reply_markup(chat_id, message_id, reply_markup=menu_keyboard)
 
     @staticmethod
-    def parameters(user, message):
+    def parameters(user):
         sex = Requests.user_sex(user)
         name = Requests.user_name(user)
         surname = Requests.user_surname(user)
@@ -130,11 +130,13 @@ class Get:
                 date_format = "%d.%m.%Y"
                 try:
                     date_object = datetime.strptime(date_str, date_format).date()
-                    Requests.save_user_b_date(user, date_object)
-                    bot.send_message(user,
-                                     text=emoji() + f'Записал дату рождения:\n{Requests.user_b_date(user)}\n\nВыберите пол:',
-                                     reply_markup=small_keyboard('sex'))
+                    if (date_object.year > 1900) and (date_object <= datetime.now().date()):
+                        Requests.save_user_b_date(user, date_object)
+                        bot.send_message(user,text=emoji() + f'Записал дату рождения:\n{Requests.user_b_date(user).date()}\n\nВыберите пол:',reply_markup=small_keyboard('sex'))
                     # bot.send_message(user, text=emoji() + 'Выберите пол', reply_markup=small_keyboard('sex'))
+                    else:
+                        bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите дату рождения ещё раз')
+                        bot.register_next_step_handler(message, Get.start_age)
                 except ValueError:
                     bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите дату рождения ещё раз')
                     bot.register_next_step_handler(message, Get.start_age)
@@ -202,8 +204,12 @@ class Get:
                 date_format = "%d.%m.%Y"
                 try:
                     date_object = datetime.strptime(date_str, date_format).date()
-                    Requests.save_user_b_date(user, date_object)
-                    Call.parameters(user)
+                    if (date_object.year > 1900) and (date_object <= datetime.now().date()):
+                        Requests.save_user_b_date(user, date_object)
+                        Call.parameters(user)
+                    else:
+                        bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите дату рождения ещё раз')
+                        bot.register_next_step_handler(message, Get.edit_age)
                 except ValueError:
                     bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите дату рождения ещё раз')
                     bot.register_next_step_handler(message, Get.edit_age)
