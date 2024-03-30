@@ -263,11 +263,11 @@ def callback_worker(call):
     elif call.data == 'edit_sex':
         bot.edit_message_reply_markup(chat_id, message_id)
         bot.edit_message_text(emoji() + 'Выберите пол', chat_id, message_id, reply_markup=small_keyboard('parameters'))
-    elif call.data == 'parameters_male':
+    elif call.data == 'edit_sex_male':
         Requests.save_user_sex(user, 0)
         bot.delete_message(chat_id, message_id)
         Call.parameters(user)
-    elif call.data == 'parameters_female':
+    elif call.data == 'edit_sex_female':
         Requests.save_user_sex(user, 1)
         bot.delete_message(chat_id, message_id)
         Call.parameters(user)
@@ -330,8 +330,8 @@ def small_keyboard(keyboard_type):
         keyboard.add(types.InlineKeyboardButton(text='Мужской', callback_data='sex_male'),
                      types.InlineKeyboardButton(text='Женский', callback_data='sex_female'))
     if keyboard_type == 'parameters':
-        keyboard.add(types.InlineKeyboardButton(text='Мужской', callback_data='parameters_male'),
-                     types.InlineKeyboardButton(text='Женский', callback_data='parameters_female'))
+        keyboard.add(types.InlineKeyboardButton(text='Мужской', callback_data='edit_sex_male'),
+                     types.InlineKeyboardButton(text='Женский', callback_data='edit_sex_female'))
     return keyboard
 
 
