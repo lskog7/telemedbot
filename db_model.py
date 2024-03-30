@@ -30,13 +30,14 @@ class Users(BaseModel):  # Пользователь
     surname = CharField(max_length=256)
     patronymic = CharField(max_length=256)
     b_date = DateTimeField()
+    current_test = IntegerField(default=0)
+    current_question = IntegerField(default=0) # Текущий вопрос
 
 
 class Tests(BaseModel):  # Данные об исследовании
     user_id = ForeignKeyField(Users, null=True)
     date = DateTimeField(null=True)
     add_info = TextField()
-    curr_quest = IntegerField()
 
 
 class Specialists(BaseModel):  # Данные о специалисте
