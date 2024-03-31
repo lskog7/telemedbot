@@ -5,14 +5,11 @@ import datetime
 
 class Requests:
 
-    # Проверка наличия пользователей в БД
+    # Проверка наличия пользователя в БД по id
     @staticmethod
-    def users_in_db():
-        count = Users.select(Users.telegram_id).count()
-        if count == 0:
-            return 0
-        else:
-            return 1
+    def users_in_db(telegram_id):
+        count = Users.select(Users.telegram_id).where(Users.telegram_id == telegram_id).count()
+        return count
 
     # Запись юзера
     @staticmethod
