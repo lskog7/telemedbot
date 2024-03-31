@@ -1,74 +1,88 @@
-from typing import Self
 from db_model import Users, Tests, Specialists, Results, Questions, Answers, UserAnswers
 from peewee import JOIN
+import datetime
 
 
 class Requests:
 
+    # Число уникальных юзеров в БД
     @staticmethod
-    def users_in_db(user):
+    def count_users_in_db(user):
         return Users.select(Users.telegram_id).count()
 
+    # Запись юзера
     @staticmethod
     def write_user(telegram_id):
-        u = Users(telegram_id=telegram_id, sex=0)
-        u.save()
+        # Записываем новую строчку в БД
+        query = Users(telegram_id=telegram_id, sex=0)
+        query.save()
 
+    # Возвращает пол выбранного пользователя
     @staticmethod
-    def user_sex(telegram_id):
-        u = Users.select().where(Users.telegram_id == telegram_id)
-        return Users.SEX_CHOICES[u[0].sex][1]
+    def get_user_sex(telegram_id):
+        query = Users.select().where(Users.telegram_id == telegram_id)
+        return Users.SEX_CHOICES[query[0].sex][1]
 
+    # Возвращает имя выбранного пользователя
     @staticmethod
-    def user_name(telegram_id):
-        u = Users.select().where(Users.telegram_id == telegram_id)
-        return u[0].name
+    def get_user_name(telegram_id):
+        query = Users.select().where(Users.telegram_id == telegram_id)
+        return query[0].name
 
+    # Возвращает фамилию выбранного пользователя
     @staticmethod
-    def user_surname(telegram_id):
-        u = Users.select().where(Users.telegram_id == telegram_id)
-        return u[0].surname
+    def get_user_surname(telegram_id):
+        query = Users.select().where(Users.telegram_id == telegram_id)
+        return query[0].surname
 
+    # Возвращает отчество выбранного пользователя
     @staticmethod
-    def user_patronymic(telegram_id):
-        u = Users.select().where(Users.telegram_id == telegram_id)
-        return u[0].patronymic
+    def get_user_patronymic(telegram_id):
+        query = Users.select().where(Users.telegram_id == telegram_id)
+        return query[0].patronymic
 
+    # Возвращает дату рождения выбранного пользователя
     @staticmethod
-    def user_b_date(telegram_id):
-        u = Users.select().where(Users.telegram_id == telegram_id)
-        return u[0].b_date
+    def get_user_b_date(telegram_id):
+        query = Users.select().where(Users.telegram_id == telegram_id)
+        return query[0].b_date
 
+    # Сохраняет имя пользователя
     @staticmethod
     def save_user_name(telegram_id, name):
-        u = Users.get(Users.telegram_id == telegram_id)
-        u.name = name
-        u.save()
+        query = Users.get(Users.telegram_id == telegram_id)
+        query.name = name
+        query.save()
 
+    # Сохраняет фамилия пользователя
     @staticmethod
     def save_user_surname(telegram_id, surname):
-        u = Users.get(Users.telegram_id == telegram_id)
-        u.surname = surname
-        u.save()
+        query = Users.get(Users.telegram_id == telegram_id)
+        query.surname = surname
+        query.save()
 
+    # Сохраняет отчество пользователя
     @staticmethod
     def save_user_patronymic(telegram_id, patronymic):
-        u = Users.get(Users.telegram_id == telegram_id)
-        u.patronymic = patronymic
-        u.save()
+        query = Users.get(Users.telegram_id == telegram_id)
+        query.patronymic = patronymic
+        query.save()
 
+    # Сохраняет пол пользователя
     @staticmethod
     def save_user_sex(telegram_id, sex):
-        u = Users.get(Users.telegram_id == telegram_id)
-        u.sex = sex
-        u.save()
+        query = Users.get(Users.telegram_id == telegram_id)
+        query.sex = sex
+        query.save()
 
+    # Сохраняет дату рождения пользователя
     @staticmethod
     def save_user_b_date(telegram_id, date_str):
-        u = Users.get(Users.telegram_id == telegram_id)
-        u.b_date = date_str
-        u.save()
+        query = Users.get(Users.telegram_id == telegram_id)
+        query.b_date = date_str
+        query.save()
 
+    # Возвращает номер последнего теста и вопроса для пользователя (если нет, то 0, 0)
     @staticmethod
     def get_user_next_question(telegram_id):  # Очередной неотвеченный вопрос
         query = Users.select().where(Users.telegram_id == telegram_id)
@@ -82,6 +96,7 @@ class Requests:
         else:
             return 0, 0
 
+    # Возвращает текст вопроса
     @staticmethod
     def get_question_text(question_id):  # Очередной неотвеченный вопрос
         query = Questions.select().where(Questions.id == question_id)
@@ -91,6 +106,7 @@ class Requests:
         else:
             return -1
 
+    # Возвращает варианты ответа на вопрос
     @staticmethod
     def get_question_answers(question_id):  # Все варианты ответов на вопрос
         query = Answers.select().where(Answers.question_id == question_id)
@@ -102,7 +118,7 @@ class Requests:
         else:
             return -1
 
-    # Очередной неотвеченный вопрос и его варианты ответа
+    # Очередной неотвеченный вопрос (номер) и его варианты ответа (лист)
     @staticmethod
     def get_next_user_question_and_answers(telegram_id):
         current_test, current_question = Requests.get_user_next_question(telegram_id)
@@ -117,6 +133,7 @@ class Requests:
         else:
             return -1, -1
 
+    # Возвращает список тестов пользователя
     @staticmethod
     def get_user_tests(telegram_id):
         query1 = Users.select(Users.id).where(Users.telegram_id == telegram_id)
@@ -130,6 +147,7 @@ class Requests:
         for t_id in query2:
             test_ids.append(t_id)
         return test_ids
+
 
     @staticmethod
     def get_user_result(telegram_id, test_num):
@@ -154,8 +172,6 @@ class Requests:
         if len(query) != 0:
             user = query[0]
             info = [0 for _ in range(5)]
-            # info[0] = user.id
-            # info[1] = user.telegram_id
             info[0] = user.name
             info[1] = user.surname
             info[2] = user.patronymic
@@ -164,3 +180,10 @@ class Requests:
             return info
         else:
             return -1
+
+    @staticmethod
+    def start_new_test(telegram_id, text_info=""):
+        query1 = Users.select().where(Users.telegram_id == telegram_id)
+        user_id = query1[0].id
+        query2 = Tests(user_id=user_id, date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), text=text_info, curr_test=0)
+        query2.save()
