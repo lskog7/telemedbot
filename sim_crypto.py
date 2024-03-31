@@ -5,10 +5,11 @@ from Crypto import Random
 
 def transform_password(password):
     h = MD5.new()
-    h.update(password.encode('utf-8'))
+    h.update(password.encode())
     return h.digest()
 
 def encrypt(message, key):
+    message = str(message)
     encr_key = transform_password(key)
     message_hash = SHA3_256.new(message.encode())
     message_with_hash = message.encode() + message_hash.hexdigest().encode()
