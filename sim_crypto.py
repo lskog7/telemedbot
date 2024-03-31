@@ -8,27 +8,23 @@ def transform_password(password):
     h.update(password.encode())
     return h.digest()
 
-def encrypt(message, key):
+def encrypt(message, key, iv):
     message = str(message)
-    encr_key = transform_password(key)
     message_hash = SHA3_256.new(message.encode())
     message_with_hash = message.encode() + message_hash.hexdigest().encode()
-    iv = Random.new().read(AES.block_size)
-    cipher = AES.new(encr_key, AES.MODE_CFB, iv)
+    cipher = AES.new(key, AES.MODE_CFB, iv)
     encrypted_message = iv + cipher.encrypt(message_with_hash)
     return encrypted_message.hex()
 
 
-def decrypt(encr, key):
+def decrypt(encr, key, iv):
 
     encr = bytes.fromhex(encr)
-    decrypt_key = transform_password(key)
 
     bsize = AES.block_size
     dsize = SHA3_256.digest_size * 2
 
-    iv = Random.new().read(bsize)
-    cipher = AES.new(decrypt_key, AES.MODE_CFB, iv)
+    cipher = AES.new(key, AES.MODE_CFB, iv)
     decrypted_message_with_hesh = cipher.decrypt(encr)[bsize:]
     decrypted_message = decrypted_message_with_hesh[:-dsize]
     digest = SHA3_256.new(decrypted_message).hexdigest()
@@ -39,20 +35,3 @@ def decrypt(encr, key):
     else:
         if digest == decoding_decrypted_message:
             return decrypted_message.decode()
-
-
-# if __name__ == '__main__':
-#     text = 'fgjskdghk'
-#     key1 = 'Traveling through hyperspace ain’t like dusting crops, farm boy regergergergerger.'
-#     encr_message = encrypt(text, key1)
-#     print(encr_message)
-#     decr_message = decrypt(encr_message, key1)
-#     print(decr_message)
-#     print('------------------------------------------------')
-#     key2 = 'I love it, I love it, I love it, I love it'
-#     encr_message = encrypt(text, key2)
-#     print(encr_message)
-#     decr_message = decrypt(encr_message, key2)
-#     print(decr_message)
-#
-#     print(decrypt(encr_message, key1))
