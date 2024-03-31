@@ -5,6 +5,7 @@ from telebot import types
 from datetime import datetime
 from db_model import Users, Tests, Specialists, Results, Questions, Answers, UserAnswers
 from peewee import JOIN
+from sim_crypto import transform_password
 
 bot = telebot.TeleBot('7077776032:AAGJLvl7VZVzmGXDPX6nqIEbetTLSQcuJm8', num_threads=10)
 
@@ -34,9 +35,9 @@ class Call:
     @staticmethod
     def parameters(user):
         sex = Requests.get_user_sex(user)
-        name = Requests.get_user_name(user)
-        surname = Requests.get_user_surname(user)
-        patronymic = Requests.get_user_patronymic(user)
+        name = Requests.get_user_name(user, key, iv)
+        surname = Requests.get_user_surname(user, key, iv)
+        patronymic = Requests.get_user_patronymic(user, key, iv)
         date_of_birth = Requests.get_user_b_date(user).date()
         parameters_keyboard = types.InlineKeyboardMarkup()
         parameters_keyboard.add(types.InlineKeyboardButton(text='Изменить ФИО', callback_data='edit_surname'))
@@ -48,10 +49,11 @@ class Call:
 
     @staticmethod
     def edit_parameters(user, chat_id, message_id):
+        # global key, iv
         sex = Requests.get_user_sex(user)
-        name = Requests.get_user_name(user)
-        surname = Requests.get_user_surname(user)
-        patronymic = Requests.get_user_patronymic(user)
+        name = Requests.get_user_name(user, key, iv)
+        surname = Requests.get_user_surname(user, key, iv)
+        patronymic = Requests.get_user_patronymic(user, key, iv)
         date_of_birth = Requests.get_user_b_date(user).date()
         parameters_keyboard = types.InlineKeyboardMarkup()
         parameters_keyboard.add(types.InlineKeyboardButton(text='Изменить ФИО', callback_data='edit_surname'))
@@ -74,7 +76,7 @@ class Get:
             bot.register_next_step_handler(message, Get.start_surname)
         else:
             if surname.isalpha() and len(surname) < 31:
-                Requests.save_user_surname(user, surname)
+                Requests.save_user_surname(user, surname, key, iv)
                 bot.send_message(user, text=emoji() + f'Введите Ваше имя')
                 bot.register_next_step_handler(message, Get.start_name)
             else:
@@ -91,7 +93,7 @@ class Get:
             bot.register_next_step_handler(message, Get.start_name)
         else:
             if name.isalpha() and len(name) < 31:
-                Requests.save_user_name(user, name)
+                Requests.save_user_name(user, name, key, iv)
                 bot.send_message(user, text=emoji() + f'Введите Ваше отчество')
                 bot.register_next_step_handler(message, Get.start_patronymic)
             else:
@@ -107,9 +109,9 @@ class Get:
             bot.register_next_step_handler(message, Get.start_patronymic)
         else:
             if patronymic.isalpha() and len(patronymic) < 31:
-                Requests.save_user_patronymic(user, patronymic)
+                Requests.save_user_patronymic(user, patronymic, key, iv)
                 bot.send_message(user,
-                                 text=emoji() + f'Записал ФИО:\n{Requests.get_user_surname(user)} {Requests.get_user_name(user)} {Requests.get_user_patronymic(user)}\n\nВведите дату рождения в формате: ДД.ММ.ГГГГ')
+                                 text=emoji() + f'Записал ФИО:\n{Requests.get_user_surname(user, key, iv)} {Requests.get_user_name(user, key, iv)} {Requests.get_user_patronymic(user, key, iv)}\n\nВведите дату рождения в формате: ДД.ММ.ГГГГ')
                 bot.register_next_step_handler(message, Get.start_age)
             else:
                 bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите отчество ещё раз')
@@ -150,7 +152,7 @@ class Get:
             bot.register_next_step_handler(message, Get.edit_surname)
         else:
             if surname.isalpha() and len(surname) < 31:
-                Requests.save_user_surname(user, surname)
+                Requests.save_user_surname(user, surname, key, iv)
 
                 bot.send_message(user, text=emoji() + f'Введите Ваше имя')
                 bot.register_next_step_handler(message, Get.edit_name)
@@ -167,7 +169,7 @@ class Get:
             bot.register_next_step_handler(message, Get.edit_name)
         else:
             if name.isalpha() and len(name) < 31:
-                Requests.save_user_name(user, name)
+                Requests.save_user_name(user, name, key, iv)
                 bot.send_message(user, text=emoji() + f'Введите Ваше отчество')
                 bot.register_next_step_handler(message, Get.edit_patronymic)
             else:
@@ -183,7 +185,7 @@ class Get:
             bot.register_next_step_handler(message, Get.edit_patronymic)
         else:
             if patronymic.isalpha() and len(patronymic) < 31:
-                Requests.save_user_patronymic(user, patronymic)
+                Requests.save_user_patronymic(user, patronymic, key, iv)
                 Call.parameters(user)
             else:
                 bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите отчество ещё раз')
@@ -280,7 +282,7 @@ def callback_worker(call):
 @bot.message_handler(commands=['userinfo', 'botinfo', 'test', 'results', 'help'])
 def commander(message: Message):
     user = message.from_user.id
-    if Requests.user_in_db(user):
+    if Requests.users_in_db(user):
         command = message.text[1:]
         if command == 'userinfo':
             Call.parameters(user)
@@ -306,7 +308,7 @@ def commander(message: Message):
 @bot.message_handler(commands=['start', 'menu'])
 def registration(message: Message):
     user = message.from_user.id
-    if not Requests.user_in_db(user):
+    if not Requests.users_in_db(user):
         if message.from_user.is_bot is False:
             q = emoji() + 'Привет'
             bot.send_message(user, text=q)
@@ -337,6 +339,9 @@ def small_keyboard(keyboard_type):
 
 if __name__ == '__main__':
     print(bot.get_me())
+    iv = bytes.fromhex('6d120b35d686c632e4d4e42a1e469de9')
+    key = transform_password('Gm9BbWmMH4UjNKislgnMPAJn3qVOP1Ay')
+
     # bot.set_chat_menu_button()
     command_answers = ['/start', '/menu', '/userinfo', '/botinfo', '/test', '/results', '/help']
     menu_answers = ['/start', '/menu']
