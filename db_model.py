@@ -31,7 +31,7 @@ class Users(BaseModel):  # Пользователь
     patronymic = CharField(max_length=256)
     b_date = DateTimeField()
     current_test = IntegerField(default=0)
-    current_question = IntegerField(default=0) # Текущий вопрос
+    current_question = IntegerField(default=0)  # Текущий вопрос
 
 
 class Tests(BaseModel):  # Данные об исследовании
@@ -51,6 +51,7 @@ class Results(BaseModel):  # Результат исследования
 
 class Questions(BaseModel):  # Вопросы
     text = TextField()
+    type = IntegerField(null=True)  # Тип: 0 - закрытый ответ, 1 - открытый ответ
 
 
 class Answers(BaseModel):  # Вариант ответа
