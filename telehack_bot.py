@@ -33,11 +33,11 @@ class Call:
 
     @staticmethod
     def parameters(user):
-        sex = Requests.user_sex(user)
-        name = Requests.user_name(user)
-        surname = Requests.user_surname(user)
-        patronymic = Requests.user_patronymic(user)
-        date_of_birth = Requests.user_b_date(user).date()
+        sex = Requests.get_user_sex(user)
+        name = Requests.get_user_name(user)
+        surname = Requests.get_user_surname(user)
+        patronymic = Requests.get_user_patronymic(user)
+        date_of_birth = Requests.get_user_b_date(user).date()
         parameters_keyboard = types.InlineKeyboardMarkup()
         parameters_keyboard.add(types.InlineKeyboardButton(text='Изменить ФИО', callback_data='edit_surname'))
         parameters_keyboard.add(types.InlineKeyboardButton(text='Изменить пол', callback_data='edit_sex'))
@@ -48,11 +48,11 @@ class Call:
 
     @staticmethod
     def edit_parameters(user, chat_id, message_id):
-        sex = Requests.user_sex(user)
-        name = Requests.user_name(user)
-        surname = Requests.user_surname(user)
-        patronymic = Requests.user_patronymic(user)
-        date_of_birth = Requests.user_b_date(user).date()
+        sex = Requests.get_user_sex(user)
+        name = Requests.get_user_name(user)
+        surname = Requests.get_user_surname(user)
+        patronymic = Requests.get_user_patronymic(user)
+        date_of_birth = Requests.get_user_b_date(user).date()
         parameters_keyboard = types.InlineKeyboardMarkup()
         parameters_keyboard.add(types.InlineKeyboardButton(text='Изменить ФИО', callback_data='edit_surname'))
         parameters_keyboard.add(types.InlineKeyboardButton(text='Изменить пол', callback_data='edit_sex'))
@@ -109,7 +109,7 @@ class Get:
             if patronymic.isalpha() and len(patronymic) < 31:
                 Requests.save_user_patronymic(user, patronymic)
                 bot.send_message(user,
-                                 text=emoji() + f'Записал ФИО:\n{Requests.user_surname(user)} {Requests.user_name(user)} {Requests.user_patronymic(user)}\n\nВведите дату рождения в формате: ДД.ММ.ГГГГ')
+                                 text=emoji() + f'Записал ФИО:\n{Requests.get_user_surname(user)} {Requests.get_user_name(user)} {Requests.get_user_patronymic(user)}\n\nВведите дату рождения в формате: ДД.ММ.ГГГГ')
                 bot.register_next_step_handler(message, Get.start_age)
             else:
                 bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите отчество ещё раз')
@@ -132,7 +132,7 @@ class Get:
                     date_object = datetime.strptime(date_str, date_format).date()
                     if (date_object.year > 1900) and (date_object <= datetime.now().date()):
                         Requests.save_user_b_date(user, date_object)
-                        bot.send_message(user,text=emoji() + f'Записал дату рождения:\n{Requests.user_b_date(user).date()}\n\nВыберите пол:',reply_markup=small_keyboard('sex'))
+                        bot.send_message(user, text=emoji() + f'Записал дату рождения:\n{Requests.get_user_b_date(user).date()}\n\nВыберите пол:', reply_markup=small_keyboard('sex'))
                     # bot.send_message(user, text=emoji() + 'Выберите пол', reply_markup=small_keyboard('sex'))
                     else:
                         bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите дату рождения ещё раз')
