@@ -11,7 +11,7 @@ class Requests:
         count = Users.select(Users.telegram_id).where(Users.telegram_id == telegram_id).count()
         return count
 
-    # Запись юзера
+    # Запись новой строки в таблицу users
     @staticmethod
     def write_user(telegram_id):
         # Записываем новую строчку в БД
@@ -149,7 +149,7 @@ class Requests:
             test_ids.append(t_id)
         return test_ids
 
-
+    # Возвращает список результатов пользователя (id специалистов)
     @staticmethod
     def get_user_result(telegram_id, test_num):
         user_tests = Requests.get_user_tests(telegram_id)
@@ -158,14 +158,31 @@ class Requests:
                 query = Results.select(Results.specialist_id).where(
                     Results.test_id == user_tests[test_num]
                 )
-                specialists = []
+                specialists_ids = []
                 for spec in query:
-                    specialists.append(spec)
-                return specialists
+                    specialists_ids.append(spec.specialist_id)
+                return specialists_ids
             else:
                 return -1
         else:
             return -1
+
+    # Возвращает описание специалистов по id
+    @staticmethod
+    def get_specialists_info(specialists_ids):
+        specialists_info = []
+        for id in specialists_ids:
+            query = Specialists.select(Specialists.info).where(Specialists.id == id)
+            info = query[0].info
+            specialists_info.append(info)
+        return specialists_info
+
+    # Возвращает описание специалистов для выбранного юзера и выбранного теста
+    @staticmethod
+    def get_user_specialists(telegram_id, test_num):
+        specialists_ids = Requests.get_user_result(telegram_id, test_num)
+        specialists_info = Requests.get_specialists_info(specialists_ids)
+        return specialists_info
 
     @staticmethod
     def get_user_info(telegram_id):
