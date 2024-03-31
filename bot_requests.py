@@ -5,10 +5,14 @@ import datetime
 
 class Requests:
 
-    # Число уникальных юзеров в БД
+    # Проверка наличия пользователей в БД
     @staticmethod
-    def count_users_in_db(user):
-        return Users.select(Users.telegram_id).count()
+    def users_in_db():
+        count = Users.select(Users.telegram_id).count()
+        if count == 0:
+            return 0
+        else:
+            return 1
 
     # Запись юзера
     @staticmethod
