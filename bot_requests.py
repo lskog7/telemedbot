@@ -1,6 +1,6 @@
 from db_model import Users, Tests, Specialists, Results, Questions, Answers, UserAnswers
 from peewee import JOIN
-import datetime
+from datetime import datetime
 from sim_crypto import encrypt, decrypt
 
 
@@ -47,7 +47,7 @@ class Requests:
     @staticmethod
     def get_user_b_date(telegram_id):
         query = Users.select().where(Users.telegram_id == telegram_id)
-        return query[0].b_date
+        return query[0].b_date.date()
 
     # Сохраняет имя пользователя
     @staticmethod
@@ -194,8 +194,8 @@ class Requests:
             info[0] = decrypt(user.name, key, iv)
             info[1] = decrypt(user.surname, key, iv)
             info[2] = decrypt(user.patronymic, key, iv)
-            info[3] = user.sex
-            info[4] = user.b_date
+            info[3] = Users.SEX_CHOICES[user.sex][1]
+            info[4] = user.b_date.date()
             return info
         else:
             return -1
@@ -204,5 +204,5 @@ class Requests:
     def start_new_test(telegram_id, text_info=""):
         query1 = Users.select().where(Users.telegram_id == telegram_id)
         user_id = query1[0].id
-        query2 = Tests(user_id=user_id, date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), text=text_info, curr_test=0)
+        query2 = Tests(user_id=user_id, date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), text=text_info, curr_test=0)
         query2.save()

@@ -34,11 +34,7 @@ class Call:
 
     @staticmethod
     def parameters(user):
-        sex = Requests.get_user_sex(user)
-        name = Requests.get_user_name(user, key, iv)
-        surname = Requests.get_user_surname(user, key, iv)
-        patronymic = Requests.get_user_patronymic(user, key, iv)
-        date_of_birth = Requests.get_user_b_date(user).date()
+        name, surname, patronymic, sex, date_of_birth = Requests.get_user_info(user, key, iv)
         parameters_keyboard = types.InlineKeyboardMarkup()
         parameters_keyboard.add(types.InlineKeyboardButton(text='Изменить ФИО', callback_data='edit_surname'))
         parameters_keyboard.add(types.InlineKeyboardButton(text='Изменить пол', callback_data='edit_sex'))
@@ -50,11 +46,7 @@ class Call:
     @staticmethod
     def edit_parameters(user, chat_id, message_id):
         # global key, iv
-        sex = Requests.get_user_sex(user)
-        name = Requests.get_user_name(user, key, iv)
-        surname = Requests.get_user_surname(user, key, iv)
-        patronymic = Requests.get_user_patronymic(user, key, iv)
-        date_of_birth = Requests.get_user_b_date(user).date()
+        name, surname, patronymic, sex, date_of_birth = Requests.get_user_info(user, key, iv)
         parameters_keyboard = types.InlineKeyboardMarkup()
         parameters_keyboard.add(types.InlineKeyboardButton(text='Изменить ФИО', callback_data='edit_surname'))
         parameters_keyboard.add(types.InlineKeyboardButton(text='Изменить пол', callback_data='edit_sex'))
@@ -134,7 +126,7 @@ class Get:
                     date_object = datetime.strptime(date_str, date_format).date()
                     if (date_object.year > 1900) and (date_object <= datetime.now().date()):
                         Requests.save_user_b_date(user, date_object)
-                        bot.send_message(user, text=emoji() + f'Записал дату рождения:\n{Requests.get_user_b_date(user).date()}\n\nВыберите пол:', reply_markup=small_keyboard('sex'))
+                        bot.send_message(user, text=emoji() + f'Записал дату рождения:\n{Requests.get_user_b_date(user)}\n\nВыберите пол:', reply_markup=small_keyboard('sex'))
                     # bot.send_message(user, text=emoji() + 'Выберите пол', reply_markup=small_keyboard('sex'))
                     else:
                         bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите дату рождения ещё раз')
