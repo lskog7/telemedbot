@@ -153,14 +153,14 @@ class Requests:
         query = Users.select().where(Users.telegram_id == telegram_id)
         if len(query) != 0:
             user = query[0]
-            info = [0 i in range(7)]
-            info[0] = user.id
-            info[1] = user.telegram_id
-            info[2] = user.name
-            info[3] = user.surname
-            info[4] = user.patronymic
-            info[5] = user.sex
-            info[6] = user.b_date
+            info = [0 for _ in range(5)]
+            # info[0] = user.id
+            # info[1] = user.telegram_id
+            info[0] = user.name
+            info[1] = user.surname
+            info[2] = user.patronymic
+            info[3] = user.sex
+            info[4] = user.b_date
             return info
         else:
             return -1
