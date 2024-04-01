@@ -36,29 +36,36 @@ class Users(BaseModel):  # Пользователь
 
 class Tests(BaseModel):  # Данные об исследовании
     user_id = ForeignKeyField(Users, null=True)
-    date = DateTimeField(null=True)
-    add_info = TextField()
+    date = DateTimeField()
+    add_info = TextField(default=0)
 
 
 class Specialists(BaseModel):  # Данные о специалисте
-    info = CharField(max_length=50, null=True)
+    name = TextField(default=0)
+    info = TextField(default=0)
 
 
 class Results(BaseModel):  # Результат исследования
-    test_id = ForeignKeyField(Tests, null=True)
-    specialist_id = ForeignKeyField(Specialists, null=True)
+    test_id = ForeignKeyField(Tests)
+    specialist_id = ForeignKeyField(Specialists)
 
 
 class Questions(BaseModel):  # Вопросы
-    text = TextField()
-    type = IntegerField(null=True)  # Тип: 0 - закрытый ответ, 1 - открытый ответ
+    text = TextField(default=0)
+    type = IntegerField(default=0)  # Тип: 0 - закрытый ответ, 1 - открытый ответ
+
 
 
 class Answers(BaseModel):  # Вариант ответа
-    question_id = ForeignKeyField(Questions)
-    answer = CharField(max_length=50)
+    question_id = ForeignKeyField(Questions, null=True)
+    answer = TextField(default=0)
+    type = IntegerField(default=0)
+    score = IntegerField(default=0)
 
 
 class UserAnswers(BaseModel):  # Ответы пользователя
-    test_id = ForeignKeyField(Tests, null=True)
-    answer_id = ForeignKeyField(Answers, null=True)
+    user_id = IntegerField()
+    test_id = IntegerField()
+    question_id = IntegerField()
+    answer_id = IntegerField()
+    score = IntegerField()

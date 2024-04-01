@@ -98,43 +98,6 @@ class Requests:
         else:
             return 0, 0
 
-    # Возвращает текст вопроса
-    @staticmethod
-    def get_question_text(question_id):  # Очередной неотвеченный вопрос
-        query = Questions.select().where(Questions.id == question_id)
-        if len(query) != 0:
-            text = query[0].text
-            return text
-        else:
-            return -1
-
-    # Возвращает варианты ответа на вопрос
-    @staticmethod
-    def get_question_answers(question_id):  # Все варианты ответов на вопрос
-        query = Answers.select().where(Answers.question_id == question_id)
-        if len(query) != 0:
-            answers = []
-            for answer in query:
-                answers.append(answer)
-            return answers
-        else:
-            return -1
-
-    # Очередной неотвеченный вопрос (номер) и его варианты ответа (лист)
-    @staticmethod
-    def get_next_user_question_and_answers(telegram_id):
-        current_test, current_question = Requests.get_user_next_question(telegram_id)
-        if current_test != 0 and current_question != 0:
-            question_text = Requests.get_question_text(current_question)
-            question_answers = Requests.get_question_answers(current_question)
-            return question_text, question_answers
-        elif current_test != 0 and current_question == 0:
-            first_question_text = Requests.get_question_text(1)
-            first_question_answers = Requests.get_question_answers(1)
-            return first_question_text, first_question_answers
-        else:
-            return -1, -1
-
     # Возвращает список тестов пользователя
     @staticmethod
     def get_user_tests(telegram_id):
@@ -206,3 +169,162 @@ class Requests:
         user_id = query1[0].id
         query2 = Tests(user_id=user_id, date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), curr_test=0)
         query2.save()
+
+    # Функция, которая возвращает список всех вопросов и всех ответов
+    # questions[индекс вопроса][0 - id
+    #                           1 - тест вопроса
+    #                           2 - массив ответов][итерации по ответам, если ранее - 2]
+    @staticmethod
+    def get_full_question_list():
+        query1 = Questions.select().where(Questions.type != 3)
+        questions = []
+        for q in query1:
+            if q.type != 3:
+                if q.type == 0:
+                    ans = ["Да", "Нет"]
+                    tmp = [q.id, q.text, ans]
+                    questions.append(tmp)
+                elif q.type == 1:
+                    query2 = Answers.select().where(Answers.question_id == q.id)
+                    ans = []
+                    for q2 in query2:
+                        ans.append(q2.answer)
+                    tmp = [q.id, q.text, ans]
+                    questions.append(tmp)
+                elif q.type == 2:
+                    ans = ["Введите ответ"]
+                    tmp = [q.id, q.text, ans]
+                    questions.append(tmp)
+        return questions
+
+    # Список id вопросов по порядку
+    @staticmethod
+    def get_question_ids():
+        query = Questions.select(Questions.id).where(Questions.type != 3)
+        question_ids = []
+        for question in query:
+            question_ids.append(question.id)
+        return question_ids
+
+    # Возвращает текст вопроса
+    @staticmethod
+    def get_question(question_id):  # Очередной неотвеченный вопрос
+        query = Questions.select().where(Questions.id == question_id, Questions.type != 3)
+        if len(query) != 0:
+            text = query[0].text
+            return text
+        else:
+            return -1
+
+    # Возвращает варианты ответа на вопрос
+    @staticmethod
+    def get_question_answers(question_id):  # Все варианты ответов на вопрос
+        query = Answers.select().where(Answers.question_id == question_id)
+        if len(query) != 0:
+            if query[0].type == 0:
+                return 0
+            elif query[0].type == 1:
+                answers = []
+                for item in query:
+                    answers.append(item.answer)
+                return [1, answers]
+            elif query[0].type == 2:
+                return 2
+        else:
+            return -1
+
+    # Возвращает текст вопроса и варианты ответа
+    @staticmethod
+    def get_question_with_answers(question_id):
+        question_text = Requests.get_question(question_id)
+        if question_text != -1:
+            question_answers = Requests.get_question_answers(question_id)
+            return [question_text, question_answers]
+        else:
+            return -1
+
+    # Проверка для следующей функции
+    @staticmethod
+    def check(user_id, test_id, question_id):
+        q1 = Users.select(Users.id).where(Users.id == user_id)
+        if len(q1) != 0:
+            uid = 1
+        else:
+            uid = 0
+        q2 = Tests.select(Tests.id).where(Tests.id == test_id)
+        if len(q2) != 0:
+            tid = 1
+        else:
+            tid = 0
+        q3 = Questions.select(Questions.id).where(Questions.id == question_id)
+        if len(q3) != 0:
+            qid = 1
+        else:
+            qid = 0
+        if uid and tid and qid:
+            return 1
+        else:
+            return 0
+
+    # Запись ответа в таблицу
+    @staticmethod
+    def write_answer(user_id, test_id, question_id, answer):
+        # Проверка, чтобы данные были в БД
+        if Requests.check(user_id=user_id, test_id=test_id, question_id=question_id):
+            return -1
+        query1 = Questions.select(Questions.id, Questions.type).where(Questions.id == question_id, Questions.type != 3)
+        if query1[0].type == 0:
+            query2 = Answers.select(Answers.id, Answers.question_id, Answers.score).where(
+                Answers.question_id == question_id, Answers.type == 0)
+            if len(query2) == 0:
+                return -1
+            if answer == 1:
+                answer_id = query2[0].answer_id
+                answer_score = query2[0].score
+            elif answer == 0:
+                answer_id = query2[1].answer_id
+                answer_score = query2[1].score
+            else:
+                return -1
+            query3 = UserAnswers(user_id=user_id, test_id=test_id, question_id=question_id, answer_id=answer_id,
+                                 score=answer_score)
+            query3.save()
+            return
+        if query1[0].type == 1:
+            query2 = Answers.select(Answers.id, Answers.question_id, Answers.score).where(
+                Answers.question_id == question_id, Answers.answer == answer, Answers.type == 1)
+            if len(query2) == 0:
+                return -1
+            answer_id = query2[0].answer_id
+            answer_score = query2[0].score
+            query3 = UserAnswers(user_id=user_id, test_id=test_id, question_id=question_id, answer_id=answer_id,
+                                 score=answer_score)
+            query3.save()
+            return
+        if query1[0].type == 2:
+            query2 = Answers.select(Answers.id, Answers.question_id, Answers.score).where(
+                Answers.question_id == question_id, Answers.type == 2)
+            if len(query2) == 0:
+                return -1
+            answer_id = query2[0].answer_id
+            answer_score = 0
+            query3 = UserAnswers(user_id=user_id, test_id=test_id, question_id=question_id, answer_id=answer_id,
+                                 score=answer_score)
+            query3.save()
+            return
+
+# Очередной неотвеченный вопрос (номер) и его варианты ответа (лист)
+# ПЕРЕДЕЛАТЬ!!!
+@staticmethod
+def get_next_user_question_and_answers(telegram_id):
+    current_test, current_question = Requests.get_user_next_question(telegram_id)
+    if current_test != 0 and current_question != 0:
+        question_text = Requests.get_question_text(current_question)
+        question_answers = Requests.get_question_answers(current_question)
+        return question_text, question_answers
+    elif current_test != 0 and current_question == 0:
+        first_question_text = Requests.get_question_text(1)
+        first_question_answers = Requests.get_question_answers(1)
+        return first_question_text, first_question_answers
+    else:
+        return -1, -1
