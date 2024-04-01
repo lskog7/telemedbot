@@ -313,18 +313,32 @@ class Requests:
             query3.save()
             return
 
-# Очередной неотвеченный вопрос (номер) и его варианты ответа (лист)
-# ПЕРЕДЕЛАТЬ!!!
-@staticmethod
-def get_next_user_question_and_answers(telegram_id):
-    current_test, current_question = Requests.get_user_next_question(telegram_id)
-    if current_test != 0 and current_question != 0:
-        question_text = Requests.get_question_text(current_question)
-        question_answers = Requests.get_question_answers(current_question)
-        return question_text, question_answers
-    elif current_test != 0 and current_question == 0:
-        first_question_text = Requests.get_question_text(1)
-        first_question_answers = Requests.get_question_answers(1)
-        return first_question_text, first_question_answers
-    else:
-        return -1, -1
+    # Функция сохраняет последний тест, который проходил юзер
+    @staticmethod
+    def save_last_test(telegram_id, test_id):
+        query = Users.get(Users.telegram_id == telegram_id)
+        query.current_test = test_id
+        query.save()
+
+    # Функция сохраняет последний тест, который проходил юзер
+    @staticmethod
+    def save_last_question(telegram_id, question_id):
+        query = Users.get(Users.telegram_id == telegram_id)
+        query.current_test = question_id
+        query.save()
+
+    # Очередной неотвеченный вопрос (номер) и его варианты ответа (лист)
+    # ПЕРЕДЕЛАТЬ!!!
+    @staticmethod
+    def get_next_user_question_and_answers(telegram_id):
+        current_test, current_question = Requests.get_user_next_question(telegram_id)
+        if current_test != 0 and current_question != 0:
+            question_text = Requests.get_question_text(current_question)
+            question_answers = Requests.get_question_answers(current_question)
+            return question_text, question_answers
+        elif current_test != 0 and current_question == 0:
+            first_question_text = Requests.get_question_text(1)
+            first_question_answers = Requests.get_question_answers(1)
+            return first_question_text, first_question_answers
+        else:
+            return -1, -1
