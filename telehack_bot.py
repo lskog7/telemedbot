@@ -6,6 +6,7 @@ from datetime import datetime
 from db_model import Users, Tests, Specialists, Results, Questions, Answers, UserAnswers
 from peewee import JOIN
 from sim_crypto import transform_password
+from time import sleep
 
 bot = telebot.TeleBot('7077776032:AAGJLvl7VZVzmGXDPX6nqIEbetTLSQcuJm8', num_threads=10)
 
@@ -14,26 +15,21 @@ class Call:
 
     # вызов меню для пользователя
     @staticmethod
-    def menu(user):
+    def menu(user, chat_id=0, message_id=0):
         menu_keyboard = types.InlineKeyboardMarkup()
         menu_keyboard.add(types.InlineKeyboardButton(text='Пройти тестирование', callback_data='new_test'))
         menu_keyboard.add(types.InlineKeyboardButton(text='Результат тестирования', callback_data='result'))
         menu_keyboard.add(types.InlineKeyboardButton(text='Личная информация', callback_data='parameters'))
         menu_keyboard.add(types.InlineKeyboardButton(text='ᐱ', callback_data='roll_up'))
-        bot.send_message(user, text=emoji() + 'Выберите действие', reply_markup=menu_keyboard)
+        q = emoji() + 'Выберите действие'
+        if chat_id == 0:
+            bot.send_message(user, q, reply_markup=menu_keyboard)
+        else:
+            bot.edit_message_text(q, chat_id, message_id)
+            bot.edit_message_reply_markup(chat_id, message_id, reply_markup=menu_keyboard)
 
     @staticmethod
-    def edit_menu(chat_id, message_id):
-        menu_keyboard = types.InlineKeyboardMarkup()
-        menu_keyboard.add(types.InlineKeyboardButton(text='Пройти тестирование', callback_data='new_test'))
-        menu_keyboard.add(types.InlineKeyboardButton(text='Результат тестирования', callback_data='result'))
-        menu_keyboard.add(types.InlineKeyboardButton(text='Личная информация', callback_data='parameters'))
-        menu_keyboard.add(types.InlineKeyboardButton(text='ᐱ', callback_data='roll_up'))
-        bot.edit_message_text(emoji() + 'Выберите действие', chat_id, message_id)
-        bot.edit_message_reply_markup(chat_id, message_id, reply_markup=menu_keyboard)
-
-    @staticmethod
-    def parameters(user):
+    def edit_parameters(user, chat_id=0, message_id=0):
         name, surname, patronymic, sex, date_of_birth = Requests.get_user_info(user, key, iv)
         parameters_keyboard = types.InlineKeyboardMarkup()
         parameters_keyboard.add(types.InlineKeyboardButton(text='Изменить ФИО', callback_data='edit_surname'))
@@ -41,20 +37,29 @@ class Call:
         parameters_keyboard.add(types.InlineKeyboardButton(text='Изменить дату рождения', callback_data='edit_b_date'))
         parameters_keyboard.add(types.InlineKeyboardButton(text='ᐸ', callback_data='come_back'))
         q = emoji() + f'Личная информация\n<b>ФИО:</b> {surname} {name} {patronymic}\n<b>Пол:</b> {sex}\n<b>Дата рождения:</b> {date_of_birth}'
-        bot.send_message(user, text=q, reply_markup=parameters_keyboard, parse_mode='HTML')
-
-    @staticmethod
-    def edit_parameters(user, chat_id, message_id):
-        # global key, iv
-        name, surname, patronymic, sex, date_of_birth = Requests.get_user_info(user, key, iv)
-        parameters_keyboard = types.InlineKeyboardMarkup()
-        parameters_keyboard.add(types.InlineKeyboardButton(text='Изменить ФИО', callback_data='edit_surname'))
-        parameters_keyboard.add(types.InlineKeyboardButton(text='Изменить пол', callback_data='edit_sex'))
-        parameters_keyboard.add(types.InlineKeyboardButton(text='Изменить дату рождения', callback_data='edit_b_date'))
-        parameters_keyboard.add(types.InlineKeyboardButton(text='ᐸ', callback_data='come_back'))
-        q = emoji() + f'Личная информация\n<b>ФИО:</b> {surname} {name} {patronymic}\n<b>Пол:</b> {sex}\n<b>Дата рождения:</b> {date_of_birth}'
-        bot.edit_message_text(q, chat_id, message_id, parse_mode='HTML', reply_markup=parameters_keyboard)
+        if not chat_id:
+            bot.send_message(user, text=q, reply_markup=parameters_keyboard, parse_mode='HTML')
+        else:
+            bot.edit_message_text(q, chat_id, message_id, parse_mode='HTML', reply_markup=parameters_keyboard)
         # bot.edit_message_reply_markup(chat_id, message_id, reply_markup=parameters_keyboard)
+
+    @staticmethod
+    def new_test(user, chat_id=0, message_id=0):
+        new_test_keyboard = types.InlineKeyboardMarkup()
+        new_test_keyboard.add(types.InlineKeyboardButton(text='Начать тестирование', callback_data='start_test'))
+        q = emoji() + '<b>Тестирование</b>\n\nКакое-то описать'
+        if not chat_id:
+            new_test_keyboard.add(types.InlineKeyboardButton(text='ᐱ', callback_data='roll_up'))
+            bot.send_message(user, q, parse_mode='HTML', reply_markup=new_test_keyboard)
+        else:
+            new_test_keyboard.add(types.InlineKeyboardButton(text='ᐸ', callback_data='come_back'))
+            bot.edit_message_text(q, chat_id, message_id, parse_mode='HTML', reply_markup=new_test_keyboard)
+
+    @staticmethod
+    def bot_info(user):
+        bot_info_keyboard = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(text='ᐱ', callback_data='delete_roll_up'))
+        q = emoji() + '<b>Описание бота</b>\n\nКакое-то описать'
+        bot.send_message(user, q, parse_mode='HTML', reply_markup=bot_info_keyboard)
 
 
 class Get:
@@ -178,7 +183,7 @@ class Get:
         else:
             if patronymic.isalpha() and len(patronymic) < 31:
                 Requests.save_user_patronymic(user, patronymic, key, iv)
-                Call.parameters(user)
+                Call.edit_parameters(user)
             else:
                 bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите отчество ещё раз')
                 bot.register_next_step_handler(message, Get.edit_patronymic)
@@ -200,7 +205,7 @@ class Get:
                     date_object = datetime.strptime(date_str, date_format).date()
                     if (date_object.year > 1900) and (date_object <= datetime.now().date()):
                         Requests.save_user_b_date(user, date_object)
-                        Call.parameters(user)
+                        Call.edit_parameters(user)
                     else:
                         bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите дату рождения ещё раз')
                         bot.register_next_step_handler(message, Get.edit_age)
@@ -217,15 +222,15 @@ def callback_worker(call):
     if call.data == 'roll_up':
         bot.edit_message_reply_markup(chat_id, message_id)
     elif call.data == 'come_back':
-        Call.edit_menu(chat_id, message_id)
-    # elif call.data == 'new_test':
-    #     bot.edit_message_reply_markup(chat_id, message_id, reply_markup=Call.new_test())
-    # elif call.data == 'start_test':
-    #     bot.edit_message_reply_markup(chat_id, message_id)
+        Call.menu(user, chat_id, message_id)
+    elif call.data == 'new_test':
+        Call.new_test(user, chat_id, message_id)
+    elif call.data == 'start_test':
+         bot.delete_message(chat_id, message_id)
     #     Call.question(Requests.get_next_user_question_and_answers(user), chat_id, message_id)
-    # elif call.data == 'result':
-    #     bot.edit_message_text(Requests.last_result(user), chat_id, message_id)
-    #     bot.edit_message_reply_markup(chat_id, message_id, reply_markup=Call.result())
+    elif call.data == 'result':
+        bot.delete_message(chat_id, message_id)
+    #     Call.result()
     elif call.data == 'parameters':
         Call.edit_parameters(user, chat_id, message_id)
     # elif call.data == 'feedback':
@@ -237,16 +242,16 @@ def callback_worker(call):
     #     Call.mineralka(user)
     # elif call.data == 'mineralka_roll_up':
     #     bot.delete_message(chat_id, message_id)
-    # elif call.data == 'delete_roll_up':
-    #     bot.delete_message(chat_id, message_id)
+    elif call.data == 'delete_roll_up':
+        bot.delete_message(chat_id, message_id)
     #     Call.menu(user)
     elif call.data == "sex_male":
-        Requests.save_user_sex(user, 0)
+        Requests.save_user_sex(user, 1)
         bot.edit_message_reply_markup(chat_id, message_id)
         bot.send_message(user, emoji() + 'Записал:\nПол: Мужской')
         Call.menu(user)
     elif call.data == "sex_female":
-        Requests.save_user_sex(user, 1)
+        Requests.save_user_sex(user, 2)
         bot.edit_message_reply_markup(chat_id, message_id)
         bot.send_message(user, emoji() + 'Записал:\nПол: Женский')
         Call.menu(user)
@@ -258,13 +263,11 @@ def callback_worker(call):
         bot.edit_message_reply_markup(chat_id, message_id)
         bot.edit_message_text(emoji() + 'Выберите пол', chat_id, message_id, reply_markup=small_keyboard('parameters'))
     elif call.data == 'edit_sex_male':
-        Requests.save_user_sex(user, 0)
-        bot.delete_message(chat_id, message_id)
-        Call.parameters(user)
-    elif call.data == 'edit_sex_female':
         Requests.save_user_sex(user, 1)
-        bot.delete_message(chat_id, message_id)
-        Call.parameters(user)
+        Call.edit_parameters(user, chat_id, message_id)
+    elif call.data == 'edit_sex_female':
+        Requests.save_user_sex(user, 2)
+        Call.edit_parameters(user, chat_id, message_id)
     elif call.data == 'edit_b_date':
         bot.edit_message_reply_markup(chat_id, message_id)
         bot.edit_message_text(emoji() + 'Введите дату рождения в формате: ДД.ММ.ГГГГ', chat_id, message_id)
@@ -277,19 +280,19 @@ def commander(message: Message):
     if Requests.users_in_db(user):
         command = message.text[1:]
         if command == 'userinfo':
-            Call.parameters(user)
+            Call.edit_parameters(user)
         elif command == 'test':
-            pass
-            # bot.send_message(user, text=emoji() + 'Выберите действие', reply_markup=Call.new_test())
+            Call.new_test(user)
         elif command == 'results':
             pass
+            # Call.result()
         elif command == 'botinfo':
-            pass
+            Call.bot_info(user)
         elif command == 'help':
             pass
-        elif user == bot_owner:
-            if command == 'mail':
-                bot.register_next_step_handler(message, Get.mail)
+        # elif user == bot_owner:
+        #     if command == 'mail':
+        #         bot.register_next_step_handler(message, Get.mail)
         else:
             bot.send_message(user, emoji() + 'OK')
     else:
@@ -333,11 +336,23 @@ if __name__ == '__main__':
     print(bot.get_me())
     iv = bytes.fromhex('6d120b35d686c632e4d4e42a1e469de9')
     key = transform_password('Gm9BbWmMH4UjNKislgnMPAJn3qVOP1Ay')
-
-    # bot.set_chat_menu_button()
     command_answers = ['/start', '/menu', '/userinfo', '/botinfo', '/test', '/results', '/help']
     menu_answers = ['/start', '/menu']
     bot_owner = 706803803
-    bot.enable_save_next_step_handlers(delay=5)
-    bot.load_next_step_handlers()
-    bot.polling(none_stop=True)
+    try:
+        Requests.get_user_name(bot_owner, key, iv)
+        bot.enable_save_next_step_handlers(delay=5)
+        bot.load_next_step_handlers()
+        bot.infinity_polling()
+        # while True:
+        #     try:
+        #         bot.polling(none_stop=True)
+        #     except:
+        #         sleep(1)
+    except KeyError:
+        print('Пошёл нахуй!')
+        exit(-1)
+
+    # bot.set_chat_menu_button()
+
+

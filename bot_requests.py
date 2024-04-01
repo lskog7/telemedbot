@@ -201,8 +201,8 @@ class Requests:
             return -1
 
     @staticmethod
-    def start_new_test(telegram_id, text_info=""):
+    def start_new_test(telegram_id):
         query1 = Users.select().where(Users.telegram_id == telegram_id)
         user_id = query1[0].id
-        query2 = Tests(user_id=user_id, date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), text=text_info, curr_test=0)
+        query2 = Tests(user_id=user_id, date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), curr_test=0)
         query2.save()
