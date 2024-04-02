@@ -56,16 +56,29 @@ class Call:
             bot.edit_message_text(q, chat_id, message_id, parse_mode='HTML', reply_markup=new_test_keyboard)
 
     @staticmethod
-    def question(user, chat_id=0, message_id=0):
+    def question(user, message, chat_id=0, q_type=0):
+        message_id = message.message_id
         q_text, q_answers = Requests.get_user_current_question_with_answers(user)
         question_keyboard = types.InlineKeyboardMarkup()
         if q_answers == 0:
             question_keyboard.add(types.InlineKeyboardButton(text='Да', callback_data='yes'),types.InlineKeyboardButton(text='Нет', callback_data='no'))
+            if not q_type:
+                bot.edit_message_text(q_text, chat_id, message_id, parse_mode='HTML', reply_markup=question_keyboard)
+            else:
+                bot.send_message(user, q_text, parse_mode='HTML', reply_markup=question_keyboard)
         elif q_answers == 2:
-            question_keyboard.add(types.InlineKeyboardButton(text=''))
+            if not q_type:
+                bot.edit_message_text(q_text, chat_id, message_id)
+            else:
+                bot.send_message(user, q_text, parse_mode='HTML', reply_markup=question_keyboard)
+            bot.register_next_step_handler(message, Get.user_answer)
         else:
             for i in range(q_answers):
                 question_keyboard.add(types.InlineKeyboardButton(text=f'{q_answers[i]}', callback_data=f'{i}'))
+            if not q_type:
+                bot.edit_message_text(q_text, chat_id, message_id, parse_mode='HTML', reply_markup=question_keyboard)
+            else:
+                bot.send_message(user, q_text, parse_mode='HTML', reply_markup=question_keyboard)
 
     @staticmethod
     def bot_info(user):
@@ -225,6 +238,29 @@ class Get:
                     bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите дату рождения ещё раз')
                     bot.register_next_step_handler(message, Get.edit_age)
 
+    @staticmethod
+    def user_answer(message: Message):
+        user = message.from_user.id
+
+        answer = message.text
+        if answer in command_answers:
+            bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите дату рождения ещё раз')
+            bot.register_next_step_handler(message, Get.user_answer)
+        else:
+            try:
+                text = float(answer)
+                if text > 0:
+                    if text == round(text):
+                        Requests.write_answer(user, str(int(text)))
+                        Call.question(user, message, q_type=1)
+                    else:
+                        Requests.write_answer(user, str(text))
+                        Call.question(user, message, q_type=1)
+            except ValueError:
+                Requests.write_answer(user, answer)
+                Call.question(user, message, q_type=1)
+
+
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_worker(call):
@@ -238,23 +274,23 @@ def callback_worker(call):
     elif call.data == 'new_test':
         Call.new_test(user, chat_id, message_id)
     elif call.data == 'start_test':
-        bot.delete_message(chat_id, message_id)
+        # bot.delete_message(chat_id, message_id)
         if not Requests.get_current_test(user):
             Requests.start_new_test(user)
-            Call.question(user, chat_id, message_id)
+            Call.question(user, call.message, chat_id)
         else:
-            Call.question(user, chat_id, message_id)
+            Call.question(user, call.message, chat_id)
     elif call.data == 'result':
         bot.delete_message(chat_id, message_id)
     #     Call.result()
     elif call.data == 'parameters':
-        Call.edit_parameters(user, chat_id, message_id)
+        Call.edit_parameters(user, chat_id, call.message)
     elif call.data == 'yes':
-        Requests.write_user_answer(user, 1)
-        Call.question(user, chat_id, message_id)
+        Requests.write_answer(user, 1)
+        Call.question(user, call.message, chat_id)
     elif call.data == 'no':
-        Requests.write_user_answer(user, 0)
-        Call.question(user, chat_id, message_id)
+        Requests.write_answer(user, 0)
+        Call.question(user, call.message, chat_id)
     # elif call.data == 'feedback':
     #     bot.edit_message_reply_markup(chat_id, message_id)
     #     bot.send_message(user, emoji() + 'Напишите Ваш отзыв')
@@ -295,8 +331,8 @@ def callback_worker(call):
         bot.edit_message_text(emoji() + 'Введите дату рождения в формате: ДД.ММ.ГГГГ', chat_id, message_id)
         bot.register_next_step_handler(call.message, Get.edit_age)
     else:
-        Requests.write_user_answer(user, int(call.data))
-        Call.question(user, chat_id, message_id)
+        Requests.write_answer(user, int(call.data))
+        Call.question(user, call.message, chat_id)
 
 
 
@@ -370,7 +406,8 @@ if __name__ == '__main__':
         Requests.get_user_name(bot_owner, key, iv)
         bot.enable_save_next_step_handlers(delay=5)
         bot.load_next_step_handlers()
-        bot.infinity_polling()
+        bot.polling(none_stop=True)
+        # bot.infinity_polling()
         # while True:
         #     try:
         #         bot.polling(none_stop=True)
