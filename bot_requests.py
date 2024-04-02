@@ -298,11 +298,11 @@ class Requests:
             answer = int(answer)
 
             if answer == 1:
-                answer_id = query2[0].answer_id
+                answer_id = query2[0].id
                 answer_score = query2[0].score
 
             elif answer == 0:
-                answer_id = query2[1].answer_id
+                answer_id = query2[1].id
                 answer_score = query2[1].score
 
             else:
@@ -327,7 +327,7 @@ class Requests:
             if len(query2) == 0:
                 return -1
 
-            answer_id = query2[0].answer_id
+            answer_id = query2[0].id
             answer_score = query2[0].score
             Requests.save_current_question(telegram_id, question_id + 1)
             query3 = UserAnswers(user_id=user_id, test_id=test_id, question_id=question_id, answer_id=answer_id,
@@ -343,7 +343,7 @@ class Requests:
             if len(query2) == 0:
                 return -1
 
-            answer_id = query2[0].answer_id
+            answer_id = query2[0].id
             answer_score = 0
             Requests.save_current_question(telegram_id, question_id + 1)
             query3 = UserAnswers(user_id=user_id, test_id=test_id, question_id=question_id, answer_id=answer_id,
