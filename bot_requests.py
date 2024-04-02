@@ -266,10 +266,18 @@ class Requests:
         else:
             return 0
 
+    @staticmethod
+    def get_user_id(telegram_id):
+        query = Users.select(Users.id).where(Users.telegram_id == telegram_id)
+        return query[0].id
+
     # Запись ответа в таблицу
     @staticmethod
-    def write_answer(user_id, test_id, question_id, answer):
+    def write_answer(telegram_id, answer):
         # Проверка, чтобы данные были в БД
+        user_id = Requests.get_user_id(telegram_id)
+        test_id = Requests.get_current_test(telegram_id)
+        question_id = Requests.get_current_question(telegram_id)
         if Requests.check(user_id=user_id, test_id=test_id, question_id=question_id):
             return -1
         query1 = Questions.select(Questions.id, Questions.type).where(Questions.id == question_id, Questions.type != 3)
