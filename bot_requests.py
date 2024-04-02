@@ -84,19 +84,19 @@ class Requests:
         query.b_date = date_str
         query.save()
 
-    # Возвращает номер последнего теста и вопроса для пользователя (если нет, то 0, 0)
-    @staticmethod
-    def get_user_next_question(telegram_id):  # Очередной неотвеченный вопрос
-        query = Users.select().where(Users.telegram_id == telegram_id)
-        current_test = query[0].current_test
-        current_question = query[0].current_question
-        if current_test != 0:
-            if current_question == 0:
-                return current_test, 0
-            else:
-                return current_test, current_question
-        else:
-            return 0, 0
+    # # Возвращает номер последнего теста и вопроса для пользователя (если нет, то 0, 0)
+    # @staticmethod
+    # def get_user_next_question(telegram_id):  # Очередной неотвеченный вопрос
+    #     query = Users.select().where(Users.telegram_id == telegram_id)
+    #     current_test = query[0].current_test
+    #     current_question = query[0].current_question
+    #     if current_test != 0:
+    #         if current_question == 0:
+    #             return current_test, 0
+    #         else:
+    #             return current_test, current_question
+    #     else:
+    #         return 0, 0
 
     # Возвращает список тестов пользователя
     @staticmethod
@@ -350,16 +350,27 @@ class Requests:
     # Возвращает последний тест и вопрос (0 если тестов не начато)
     @staticmethod
     def get_current_test_and_question(telegram_id):
-        last_test = Requests.get_current_test(telegram_id)
-        if last_test == -1:
+        current_test = Requests.get_current_test(telegram_id)
+        if current_test == -1:
             return -1
-        last_question = Requests.get_current_question(telegram_id)
-        if last_question == -1:
-            return last_question
-        if last_test == 0:
+        current_question = Requests.get_current_question(telegram_id)
+        if current_question == -1:
+            return current_question
+        if current_test == 0:
             return 0
         else:
-            if last_question == 0:
-                return last_test, 0
+            if current_question == 0:
+                return current_test, 0
             else:
-                return last_test, last_question
+                return current_test, current_question
+
+    # Функция, которая возвращает вопрос для юзера. Просто ее юзать можно, если нормально проверим.
+    @staticmethod
+    def get_user_next_question_with_answers(telegram_id):
+        current_question = Requests.get_current_question(telegram_id)
+        if current_question == -1:
+            return -1
+        if current_question == 0:
+            return Requests.get_question_with_answers(1)
+        else:
+            return Requests.get_question_with_answers(current_question)
