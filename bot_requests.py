@@ -280,8 +280,8 @@ class Requests:
         question_id = Requests.get_current_question(telegram_id)
         num_question = len(Questions.select())
 
-        if Requests.check(user_id=user_id, test_id=test_id, question_id=question_id):
-            return -1
+        # if Requests.check(user_id=user_id, test_id=test_id, question_id=question_id):
+        #     return -1
 
         query1 = Questions.select().where(Questions.id == question_id, Questions.type != 3)
         if len(query1) == 0:
@@ -294,6 +294,8 @@ class Requests:
 
             if len(query2) == 0:
                 return -1
+
+            answer = int(answer)
 
             if answer == 1:
                 answer_id = query2[0].answer_id
@@ -315,6 +317,8 @@ class Requests:
 
         # Обработка вопросов 1 типа
         if query1[0].type == 1:
+            answer = int(answer)
+
             answer_for_first = Requests.get_question_answers(question_id)[answer]
 
             query2 = Answers.select(Answers.id, Answers.question_id, Answers.score).where(
@@ -333,7 +337,7 @@ class Requests:
 
         # Обработка вопросов 2 типа
         if query1[0].type == 2:
-            query2 = Answers.select(Answers.id, Answers.question_id, Answers.score).where(
+            query2 = Answers.select().where(
                 Answers.question_id == question_id, Answers.type == 2)
 
             if len(query2) == 0:
