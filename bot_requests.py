@@ -282,7 +282,9 @@ class Requests:
         if Requests.check(user_id=user_id, test_id=test_id, question_id=question_id):
             return -1
 
-        query1 = Questions.select(Questions.id, Questions.type).where(Questions.id == question_id, Questions.type != 3)
+        query1 = Questions.select().where(Questions.id == question_id, Questions.type != 3)
+        if len(query1) == 0:
+            return -1
 
         # Обработка вопросов 0 типа
         if query1[0].type == 0:
