@@ -1,4 +1,4 @@
-from db_model import Users, Tests, Specialists, Results, Questions, Answers, UserAnswers
+from db_model import Users, Tests, Specialists, Results, Questions, Answers, Useranswers
 from peewee import JOIN
 from datetime import datetime
 from sim_crypto import encrypt, decrypt
@@ -227,7 +227,7 @@ class Requests:
                 answers = []
                 for item in query:
                     answers.append(item.answer)
-                return [1, answers]
+                return answers
             elif query[0].type == 2:
                 return 2
         else:
@@ -310,7 +310,7 @@ class Requests:
 
             Requests.save_current_question(telegram_id, question_id+1)
 
-            query3 = UserAnswers(user_id=user_id, test_id=test_id, question_id=question_id, answer_id=answer_id,
+            query3 = Useranswers(user_id=user_id, test_id=test_id, question_id=question_id, answer_id=answer_id,
                                  score=answer_score)
             query3.save()
             return
@@ -330,7 +330,7 @@ class Requests:
             answer_id = query2[0].id
             answer_score = query2[0].score
             Requests.save_current_question(telegram_id, question_id + 1)
-            query3 = UserAnswers(user_id=user_id, test_id=test_id, question_id=question_id, answer_id=answer_id,
+            query3 = Useranswers(user_id=user_id, test_id=test_id, question_id=question_id, answer_id=answer_id,
                                  score=answer_score)
             query3.save()
             return
@@ -346,7 +346,7 @@ class Requests:
             answer_id = query2[0].id
             answer_score = 0
             Requests.save_current_question(telegram_id, question_id + 1)
-            query3 = UserAnswers(user_id=user_id, test_id=test_id, question_id=question_id, answer_id=answer_id,
+            query3 = Useranswers(user_id=user_id, test_id=test_id, question_id=question_id, answer_id=answer_id,
                                  score=answer_score, free_answer=answer)
             query3.save()
             return

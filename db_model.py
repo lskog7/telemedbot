@@ -63,7 +63,7 @@ class Answers(BaseModel):  # Вариант ответа
     score = IntegerField(default=0)
 
 
-class UserAnswers(BaseModel):  # Ответы пользователя
+class Useranswers(BaseModel):  # Ответы пользователя
     user_id = IntegerField()
     test_id = IntegerField()
     question_id = IntegerField()

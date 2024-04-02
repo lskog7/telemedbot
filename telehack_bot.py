@@ -3,7 +3,6 @@ from telebot.types import Message
 from bot_requests import *
 from telebot import types
 from datetime import datetime
-from db_model import Users, Tests, Specialists, Results, Questions, Answers, UserAnswers
 from peewee import JOIN
 from sim_crypto import transform_password
 from time import sleep
@@ -60,6 +59,7 @@ class Call:
         message_id = message.message_id
         q_text, q_answers = Requests.get_user_current_question_with_answers(user)
         question_keyboard = types.InlineKeyboardMarkup()
+        print(q_answers)
         if q_answers == 0:
             question_keyboard.add(types.InlineKeyboardButton(text='Да', callback_data='yes'),types.InlineKeyboardButton(text='Нет', callback_data='no'))
             if not q_type:
@@ -73,7 +73,7 @@ class Call:
                 bot.send_message(user, q_text, parse_mode='HTML', reply_markup=question_keyboard)
             bot.register_next_step_handler(message, Get.user_answer)
         else:
-            for i in range(q_answers):
+            for i in range(len(q_answers)):
                 question_keyboard.add(types.InlineKeyboardButton(text=f'{q_answers[i]}', callback_data=f'{i}'))
             if not q_type:
                 bot.edit_message_text(q_text, chat_id, message_id, parse_mode='HTML', reply_markup=question_keyboard)
@@ -245,7 +245,7 @@ class Get:
         answer = message.text
         if answer in command_answers:
             bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите дату рождения ещё раз')
-            bot.register_next_step_handler(message, Get.user_answer)
+            # bot.register_next_step_handler(message, Get.user_answer)
         else:
             try:
                 text = float(answer)
