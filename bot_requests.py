@@ -239,7 +239,7 @@ class Requests:
         question_text = Requests.get_question(question_id)
         if question_text != -1:
             question_answers = Requests.get_question_answers(question_id)
-            return [question_text, question_answers]
+            return question_text, question_answers
         else:
             return -1
 
@@ -331,21 +331,21 @@ class Requests:
     @staticmethod
     def get_current_test(telegram_id):
         query = Users.get(Users.telegram_id == telegram_id)
-        last_test = query.current_test
-        if last_test < 0:
+        current_test = query.current_test
+        if current_test < 0:
             return -1
         else:
-            return last_test
+            return current_test
 
     # Функция возвращает последний вопрос, если он не 0
     @staticmethod
     def get_current_question(telegram_id):
         query = Users.get(Users.telegram_id == telegram_id)
-        last_question = query.current_question
-        if last_question < 0:
+        current_question = query.current_question
+        if current_question < 0:
             return -1
         else:
-            return last_question
+            return current_question
 
     # Возвращает последний тест и вопрос (0 если тестов не начато)
     @staticmethod
@@ -366,11 +366,13 @@ class Requests:
 
     # Функция, которая возвращает вопрос для юзера. Просто ее юзать можно, если нормально проверим.
     @staticmethod
-    def get_user_next_question_with_answers(telegram_id):
+    def get_user_current_question_with_answers(telegram_id):
         current_question = Requests.get_current_question(telegram_id)
         if current_question == -1:
             return -1
         if current_question == 0:
+            Requests.save_current_question(telegram_id, 1)
             return Requests.get_question_with_answers(1)
         else:
+            # Requests.save_current_question(telegram_id, current_question)
             return Requests.get_question_with_answers(current_question)
