@@ -278,46 +278,65 @@ class Requests:
         user_id = Requests.get_user_id(telegram_id)
         test_id = Requests.get_current_test(telegram_id)
         question_id = Requests.get_current_question(telegram_id)
+
         if Requests.check(user_id=user_id, test_id=test_id, question_id=question_id):
             return -1
+
         query1 = Questions.select(Questions.id, Questions.type).where(Questions.id == question_id, Questions.type != 3)
+
+        # Обработка вопросов 0 типа
         if query1[0].type == 0:
             query2 = Answers.select(Answers.id, Answers.question_id, Answers.score).where(
                 Answers.question_id == question_id, Answers.type == 0)
+
             if len(query2) == 0:
                 return -1
+
             if answer == 1:
                 answer_id = query2[0].answer_id
                 answer_score = query2[0].score
+
             elif answer == 0:
                 answer_id = query2[1].answer_id
                 answer_score = query2[1].score
+
             else:
                 return -1
+
             query3 = UserAnswers(user_id=user_id, test_id=test_id, question_id=question_id, answer_id=answer_id,
                                  score=answer_score)
             query3.save()
             return
+
+        # Обработка вопросов 1 типа
         if query1[0].type == 1:
+            answer_for_first = Requests.get_question_answers(question_id)[answer]
+
             query2 = Answers.select(Answers.id, Answers.question_id, Answers.score).where(
-                Answers.question_id == question_id, Answers.answer == answer, Answers.type == 1)
+                Answers.question_id == question_id, Answers.answer == answer_for_first, Answers.type == 1)
+
             if len(query2) == 0:
                 return -1
+
             answer_id = query2[0].answer_id
             answer_score = query2[0].score
             query3 = UserAnswers(user_id=user_id, test_id=test_id, question_id=question_id, answer_id=answer_id,
                                  score=answer_score)
             query3.save()
             return
+
+        # Обработка вопросов 2 типа
         if query1[0].type == 2:
             query2 = Answers.select(Answers.id, Answers.question_id, Answers.score).where(
                 Answers.question_id == question_id, Answers.type == 2)
+
             if len(query2) == 0:
                 return -1
+
             answer_id = query2[0].answer_id
             answer_score = 0
             query3 = UserAnswers(user_id=user_id, test_id=test_id, question_id=question_id, answer_id=answer_id,
-                                 score=answer_score)
+                                 score=answer_score, free_answer=answer)
             query3.save()
             return
 
