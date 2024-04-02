@@ -405,7 +405,11 @@ class Requests:
     # Функция, которая возвращает вопрос для юзера. Просто ее юзать можно, если нормально проверим.
     @staticmethod
     def get_user_current_question_with_answers(telegram_id):
-        current_question = Requests.get_current_question(telegram_id)
+        current_question = Requests.get_current_question(telegram_id) #id текущего впороса
+        query = Questions.select().where(Questions.id == current_question)
+        if query[0].type == 3:
+            Requests.save_current_question(telegram_id, current_question+1)
+            return
         if current_question == -1:
             return -1
         if current_question == 0:
