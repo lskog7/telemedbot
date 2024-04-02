@@ -278,6 +278,7 @@ class Requests:
         user_id = Requests.get_user_id(telegram_id)
         test_id = Requests.get_current_test(telegram_id)
         question_id = Requests.get_current_question(telegram_id)
+        num_question = len(Questions.select())
 
         if Requests.check(user_id=user_id, test_id=test_id, question_id=question_id):
             return -1
@@ -305,6 +306,8 @@ class Requests:
             else:
                 return -1
 
+            Requests.save_current_question(telegram_id, question_id+1)
+
             query3 = UserAnswers(user_id=user_id, test_id=test_id, question_id=question_id, answer_id=answer_id,
                                  score=answer_score)
             query3.save()
@@ -322,6 +325,7 @@ class Requests:
 
             answer_id = query2[0].answer_id
             answer_score = query2[0].score
+            Requests.save_current_question(telegram_id, question_id + 1)
             query3 = UserAnswers(user_id=user_id, test_id=test_id, question_id=question_id, answer_id=answer_id,
                                  score=answer_score)
             query3.save()
@@ -337,6 +341,7 @@ class Requests:
 
             answer_id = query2[0].answer_id
             answer_score = 0
+            Requests.save_current_question(telegram_id, question_id + 1)
             query3 = UserAnswers(user_id=user_id, test_id=test_id, question_id=question_id, answer_id=answer_id,
                                  score=answer_score, free_answer=answer)
             query3.save()
@@ -353,7 +358,7 @@ class Requests:
     @staticmethod
     def save_current_question(telegram_id, question_id):
         query = Users.get(Users.telegram_id == telegram_id)
-        query.current_test = question_id
+        query.current_question = question_id
         query.save()
 
     # Функция возвращает последний тест, если он не 0
