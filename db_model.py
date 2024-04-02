@@ -61,6 +61,7 @@ class Answers(BaseModel):  # Вариант ответа
     answer = TextField(default=0)
     type = IntegerField(default=0)
     score = IntegerField(default=0)
+    free_answer = TextField(default=0)
 
 
 class UserAnswers(BaseModel):  # Ответы пользователя
