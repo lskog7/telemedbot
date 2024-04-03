@@ -1,5 +1,4 @@
 from peewee import (
-    CharField,
     ForeignKeyField,
     IntegerField,
     Model,
@@ -8,9 +7,12 @@ from peewee import (
     SqliteDatabase,
 )
 
+
 # У всех моделей автоматически создается также поле id: PRIMARY KEY AUTO_INCREMENT
 
-db = SqliteDatabase("telehack.db")  # Наша бд
+
+#--------------------------------Используемая база данных--------------#
+db = SqliteDatabase("telehack.db")  #
 
 
 class BaseModel(Model):
@@ -18,55 +20,146 @@ class BaseModel(Model):
         database = db
 
 
-# -------------------------------Таблицы--------------------------------
+#-----------------------------------------------------------------------#
+#--------------------------------Таблицы--------------------------------#
+#-----------------------------------------------------------------------#
 
 
-class Users(BaseModel):  # Пользователь
+#--------------------------------Данные о пользователях-----------------#
+class Users(BaseModel):
     SEX_CHOICES = ((0, "Не указан"), (1, "Мужской"), (2, "Женский"))
-
-    telegram_id = IntegerField(unique=True)
-    sex = IntegerField(null=True, choices=SEX_CHOICES, default=0)
-    name = CharField(max_length=256)
-    surname = CharField(max_length=256)
-    patronymic = CharField(max_length=256)
-    b_date = DateTimeField()
-    current_test = IntegerField(default=0)
-    current_question = IntegerField(default=0)  # Текущий вопрос
-
-
-class Tests(BaseModel):  # Данные об исследовании
-    user_id = ForeignKeyField(Users, null=True)
-    date = DateTimeField()
-    add_info = TextField(default=0)
+    telegram_id = IntegerField(null=True, unique=True) # Айди телеграма пользователя, уникальная штука
+    sex = IntegerField(null=True, choices=SEX_CHOICES, default=0) # Пол пользователя
+    name = TextField() # Имя пользователя
+    surname = TextField() # Фамилия пользователя
+    patronymic = TextField() # Отчество пользователя
+    b_date = DateTimeField() #  Дата рождения пользователя
+    current_test = IntegerField(default=0) # Текущий тест, который проходит пользователь
+    # current_question = IntegerField(default=0)  # Текущий вопрос, на который отвечает полльзователь
 
 
-class Specialists(BaseModel):  # Данные о специалисте
-    name = TextField(default=0)
-    info = TextField(default=0)
+#--------------------------------Данные о тестах------------------------#
+class Tests(BaseModel):
+    user_id = ForeignKeyField(Users, null=True) # Айди пользователя, который проходит тест
+    date = DateTimeField() # Дата начала выполнения теста
+    # add_info = TextField(default=0) # Дополнительная информация
+    status = IntegerField(default=0) # 0 - если тест активен, 1 - если тест завершен
+    qtables = TextField(default=0) # Список таблиц вопросов, которые необходимо пройти пользователю помимо основной
+    curqtable = TextField(default=0) # Такущая таблица из дополнительных, в которой сидит пользователь
+    curq = IntegerField(default=0) # Текущий вопрос из текущей таблицы
 
 
-class Results(BaseModel):  # Результат исследования
-    test_id = ForeignKeyField(Tests)
-    specialist_id = ForeignKeyField(Specialists)
+#--------------------------------Данные о специалистах------------------#
+class Specialists(BaseModel):
+    name = TextField(default=0) # Название специалиста
+    info = TextField(default=0) # Описание сферы деятельности
 
 
-class Questions(BaseModel):  # Вопросы
-    text = TextField(default=0)
-    type = IntegerField(default=0)  # Тип: 0 - закрытый ответ, 1 - открытый ответ
+#--------------------------------Данные о результатах тестов------------#
+class Results(BaseModel):
+    test_id = ForeignKeyField(Tests) # Айди теста, которому соответствует результат
+    specialist_id = ForeignKeyField(Specialists) # Айди специалиста, к которому надо пойти
 
 
-
-class Answers(BaseModel):  # Вариант ответа
-    question_id = ForeignKeyField(Questions, null=True)
-    answer = TextField(default=0)
-    type = IntegerField(default=0)
-    score = IntegerField(default=0)
+#--------------------------------Вопросы по хирургии--------------------#
+class Qsurgery(BaseModel):
+    text = TextField(default=0) # Текст вопроса
+    type = IntegerField(default=0)  # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
 
 
-class Useranswers(BaseModel):  # Ответы пользователя
-    user_id = IntegerField()
-    test_id = IntegerField()
-    question_id = IntegerField()
-    answer_id = IntegerField()
-    score = IntegerField()
-    free_answer = TextField(default=0)
+#--------------------------------Вопросы по кардиологии-----------------#
+class Qcardio(BaseModel):
+    text = TextField(default=0) # Текст вопроса
+    type = IntegerField(default=0)  # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
+
+
+#--------------------------------Вопросы по дерматологии----------------#
+class Qdermo(BaseModel):
+    text = TextField(default=0) # Текст вопроса
+    type = IntegerField(default=0) # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
+
+
+#--------------------------------Вопросы по эндокринологии--------------#
+class Qendo(BaseModel):
+    text = TextField(default=0) # Текст вопроса
+    type = IntegerField(default=0) # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
+
+
+#--------------------------------Вопросы по гастроэнтерологии-----------#
+class Qgastro(BaseModel):
+    text = TextField(default=0) # Текст вопроса
+    type = IntegerField(default=0) # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
+
+
+#--------------------------------Общие вопросы--------------------------#
+class Qgeneral(BaseModel):
+    text = TextField(default=0) # Текст вопроса
+    type = IntegerField(default=0) # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
+
+
+#--------------------------------Вопросы по гинекологии-----------------#
+class Qgyne(BaseModel):
+    text = TextField(default=0) # Текст вопроса
+    type = IntegerField(default=0) # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
+
+
+#--------------------------------Вопросы по ЛОР-------------------------#
+class Qlor(BaseModel): # Вопросы по ЛОР
+    text = TextField(default=0) # Текст вопроса
+    type = IntegerField(default=0) # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
+
+
+#--------------------------------Вопросы по неврологии------------------#
+class Qnevro(BaseModel):
+    text = TextField(default=0) # Текст вопроса
+    type = IntegerField(default=0) # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
+
+
+#--------------------------------Вопросы по офтальмологии---------------#
+class Qofta(BaseModel):
+    text = TextField(default=0) # Текст вопроса
+    type = IntegerField(default=0) # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
+
+
+#--------------------------------Вопросы по пульманологии---------------#
+class Qpulmo(BaseModel):
+    text = TextField(default=0) # Текст вопроса
+    type = IntegerField(default=0) # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
+
+
+#--------------------------------Вопросы по стоматологии----------------#
+class Qstom(BaseModel):
+    text = TextField(default=0) # Текст вопроса
+    type = IntegerField(default=0) # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
+
+
+#--------------------------------Вопросы по психиатрии------------------#
+class Qsycho(BaseModel):
+    text = TextField(default=0) # Текст вопроса
+    type = IntegerField(default=0) # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
+
+
+#--------------------------------Вопросы по урологии------------------#
+class Quro(BaseModel):
+    text = TextField(default=0) # Текст вопроса
+    type = IntegerField(default=0) # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
+
+
+#--------------------------------Данные об ответах на вопросы-----------#
+class Answers(BaseModel):
+    qtable = IntegerField(null=True) # К какой таблице вопросов принадлежит вопрос
+    qid = IntegerField(null=True) # Айди вопроса в его таблице (по сути порядковый номер)
+    answer = TextField(default=0) # Вариант ответа на вопрос
+    type = IntegerField(default=0) # Тип вопроса 0-2
+    score = IntegerField(default=0) # Количество баллов за данный вопрос
+
+
+#--------------------------------Данные об ответах пользователя---------#
+class Useranswers(BaseModel):
+    user_id = IntegerField() # Айди пользователя, которому принадлежит ответ
+    test_id = IntegerField() # Айди теста, к которому принадлежит ответ
+    table_id = TextField # Название таблицы к которой принадлежит вопрос
+    question_id = IntegerField() # Айди вопроса из соответствующей таблицы
+    answer_id = IntegerField() # Айди ответа
+    score = IntegerField(default=0) # Счет, подтягивается из ответа
+    free_answer = TextField(default=0) # В это поле записывается свободный ответ
