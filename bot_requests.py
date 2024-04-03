@@ -201,7 +201,8 @@ class Requests:
     def get_user_current_question_with_answers(telegram_id):
         # Получаем юзер айди по ТГ айди
         user_id = Requests.get_user_id(telegram_id)
-
+        if user_id == -1:
+            return -1
         # Смотрим какие у пользователя таблицы в списке, какая текущая, какой вопрос сейчас (должна быть одна строка)
         q = Tests.select().where(Tests.user_id == user_id, Tests.status == 0)
         if len(q) == 0 or len(q) > 1:
@@ -378,6 +379,8 @@ class Requests:
     def write_answer(telegram_id, answer):
         # Мы узнаем, а что за юзер у нас отвечает
         user_id = Requests.get_user_id(telegram_id)
+        if user_id == -1:
+            return -1
         # Узнаем, в каком тесте сейчас тыкается пользователь
         q = Tests.select().where(Tests.user_id == user_id, Tests.status == 0)
         if len(q) == 0 or len(q) > 1:
@@ -386,83 +389,97 @@ class Requests:
         # Узнаем, в какой таблице вопросов сидит пользователь и дальше номер вопроса
         current_table = Requests.tables_dict[q[0].curqtable]
         current_question = q[0].curq
-
+        # Смотрим на какой вопрос отвечает пользователь сейчас и сохраняем его score
         query1 = current_table.select().where(current_table.id == current_question)
         if len(query1) == 0:
             return -1
-
+        # ---------------------------------------------------------------------------
         # Обработка вопросов 0 типа
         if query1[0].type == 0:
-            query2 = Answers.select(Answers.id, Answers.question_id, Answers.score).where(
-                Answers.question_id == current_question, Answers.type == 0)
-
+            query2 = Answers.select().where(Answers.qid == current_question,
+                                            Answers.type == 0)
             if len(query2) == 0:
                 return -1
-
             answer = int(answer)
-
             if answer == 1:
                 answer_id = query2[0].id
                 answer_score = query2[0].score
-
             elif answer == 0:
                 answer_id = query2[1].id
                 answer_score = query2[1].score
-
             else:
                 return -1
-
-            Requests.save_current_question(telegram_id, current_question + 1)
-
-            query3 = Useranswers(user_id=user_id, test_id=current_test, question_id=current_question,
+            # Записываем ответ в таблицу Useranswers
+            query3 = Useranswers(user_id=user_id,
+                                 test_id=current_test,
+                                 table_id=current_table,
+                                 question_id=current_question,
                                  answer_id=answer_id,
                                  score=answer_score)
             query3.save()
+            # Сохраняем пользователю новый текущий вопрос - то есть текущий + 1
+            query = Tests.get(Tests.user_id == user_id, Tests.status == 0)
+            query.curq = current_question + 1
+            query.save()
             return
-
+        # --------------------------------------------------------------------------
         # Обработка вопросов 1 типа
-        if query1[0].type == 1:
-            answer = int(answer)
-
-            answer_for_first = Requests.get_question_answers(current_question)[answer]
-
-            query2 = Answers.select(Answers.id, Answers.question_id, Answers.score).where(
-                Answers.question_id == current_question, Answers.answer == answer_for_first, Answers.type == 1)
-
-            if len(query2) == 0:
+        elif query1[0].type == 1:
+            # Получаем айди (номер) ответа
+            answer_idx = int(answer)
+            # Достаем список возможных ответов для данного вопроса
+            q = Answers.select().where(Answers.qtable == current_table, Answers.qid == current_question)
+            if len(q) == 0:
                 return -1
-
-            answer_id = query2[0].id
-            answer_score = query2[0].score
-            Requests.save_current_question(telegram_id, current_question + 1)
-            query3 = Useranswers(user_id=user_id, test_id=current_test, question_id=current_question,
+            answer_score = q[answer_idx].score
+            answer_id = q[answer_idx].id
+            # Записываем ответ в таблицу Useranswers
+            query3 = Useranswers(user_id=user_id,
+                                 test_id=current_test,
+                                 table_id=current_table,
+                                 question_id=current_question,
                                  answer_id=answer_id,
                                  score=answer_score)
             query3.save()
+            # Сохраняем пользователю новый текущий вопрос - то есть текущий + 1
+            query = Tests.get(Tests.user_id == user_id, Tests.status == 0)
+            query.curq = current_question + 1
+            query.save()
             return
-
+        # ------------------------------------------------------------------------------
         # Обработка вопросов 2 типа
-        if query1[0].type == 2:
-            query2 = Answers.select().where(
-                Answers.question_id == current_question, Answers.type == 2)
-
-            if len(query2) == 0:
+        elif query1[0].type == 2:
+            # Нам не нужна таблица ответов, так как ответ свободный
+            # Запишем ответ в free_answer
+            # Но айди ответа сохраним
+            q = Answers.select().where(Answers.qid == current_question,
+                                       Answers.type == 2)
+            if len(q) == 0:
                 return -1
-
-            answer_id = query2[0].id
-            answer_score = 0
-            Requests.save_current_question(telegram_id, current_question + 1)
-            query3 = Useranswers(user_id=user_id, test_id=current_test, question_id=current_question,
+            answer_id = q[0].id
+            # Записываем ответ в таблицу Useranswers
+            query3 = Useranswers(user_id=user_id,
+                                 test_id=current_test,
+                                 table_id=current_table,
+                                 question_id=current_question,
                                  answer_id=answer_id,
-                                 score=answer_score, free_answer=answer)
+                                 free_answer=answer)
             query3.save()
+            # Сохраняем пользователю новый текущий вопрос - то есть текущий + 1
+            query = Tests.get(Tests.user_id == user_id, Tests.status == 0)
+            query.curq = current_question + 1
+            query.save()
             return
+        else:
+            return -1
 
     @staticmethod
     def get_user_result(telegram_id):
         result = []
         # Опять получаем user_id
         user_id = Requests.get_user_id(telegram_id)
+        if user_id == -1:
+            return -1
         # Выбираем последний тест
         q = Tests.select().where(Tests.user_id == user_id).order_by(Tests.date.desc())
         test_id = q[0].id
@@ -489,7 +506,44 @@ class Requests:
         # И отдаем этот лист
         return result
 
-    # -----------------Возвращает информацию о специалистах--------------#
+    # Для доктора надо из дженерала тип 2, тип 1 и тип 0, если да
+    # @staticmethod
+    # def get_doctor_answers(telegram_id):
+    #     # Общий результат, который вернем
+    #     result = []
+    #     # Опять получаем user_id
+    #     user_id = Requests.get_user_id(telegram_id)
+    #     # Выбираем последний тест
+    #     q = Tests.select().where(Tests.user_id == user_id).order_by(Tests.date.desc())
+    #     test_id = q[0].id
+    #     # Проходим по каждой таблице с вопросами (точнее по ее ответам)
+    #     # сохраняем вопросы у которых тип 1 и 2, а также 0 с ответами "да"
+    #     # Фигачим их в словарик по врачам
+    #     micro_result = []
+    #     # Итерируемся по каждому блоку вопросов
+    #     for i in Requests.tables_dict:
+    #         # Выбираем вопросы типа 1 или 2 или 0 с ответом да
+    #         q =
+    #
+    #         current_table = Requests.tables_dict[i]
+    #         q = Useranswers.select().where(Useranswers.user_id == user_id,
+    #                                        Useranswers.test_id == test_id,
+    #                                        Useranswers.table_id == i)
+    #         total_score = 0
+    #         for item in q:
+    #             tmp = item.score
+    #             total_score += tmp
+    #         # Количество ответов с типом 0 для данной таблицы
+    #         q = current_table.select().where(current_table.type == 0)
+    #         lnt = len(q)
+    #         if total_score >= lnt:
+    #             result.append(Requests.specialists_dict[i])
+    #         else:
+    #             continue
+    #     # И отдаем этот лист
+    #     return result
+
+    # ------------------Возвращает информацию о специалистах--------------#
     @staticmethod
     def get_specialists_info(specialists_ids):
         specialists_info = []
@@ -499,57 +553,57 @@ class Requests:
             specialists_info.append(info)
         return specialists_info
 
-    # ----------------------Возвращает пол пользователя------------------#
+    # -----------------------Возвращает пол пользователя------------------#
     @staticmethod
     def get_user_specialists(telegram_id, test_num):
         specialists_ids = Requests.get_user_result(telegram_id, test_num)
         specialists_info = Requests.get_specialists_info(specialists_ids)
         return specialists_info
 
-    # ----------------------Возвращает пол пользователя------------------#
-    @staticmethod
-    def get_full_question_list():
-        query1 = Questions.select().where(Questions.type != 3)
-        questions = []
-        for q in query1:
-            if q.type != 3:
-                if q.type == 0:
-                    ans = ["Да", "Нет"]
-                    tmp = [q.id, q.text, ans]
-                    questions.append(tmp)
-                elif q.type == 1:
-                    query2 = Answers.select().where(Answers.question_id == q.id)
-                    ans = []
-                    for q2 in query2:
-                        ans.append(q2.answer)
-                    tmp = [q.id, q.text, ans]
-                    questions.append(tmp)
-                elif q.type == 2:
-                    ans = ["Введите ответ"]
-                    tmp = [q.id, q.text, ans]
-                    questions.append(tmp)
-        return questions
+    # # -----------------------Возвращает пол пользователя------------------#
+    # @staticmethod
+    # def get_full_question_list():
+    #     query1 = Questions.select().where(Questions.type != 3)
+    #     questions = []
+    #     for q in query1:
+    #         if q.type != 3:
+    #             if q.type == 0:
+    #                 ans = ["Да", "Нет"]
+    #                 tmp = [q.id, q.text, ans]
+    #                 questions.append(tmp)
+    #             elif q.type == 1:
+    #                 query2 = Answers.select().where(Answers.question_id == q.id)
+    #                 ans = []
+    #                 for q2 in query2:
+    #                     ans.append(q2.answer)
+    #                 tmp = [q.id, q.text, ans]
+    #                 questions.append(tmp)
+    #             elif q.type == 2:
+    #                 ans = ["Введите ответ"]
+    #                 tmp = [q.id, q.text, ans]
+    #                 questions.append(tmp)
+    #     return questions
 
-    # ----------------------Возвращает пол пользователя------------------#
-    @staticmethod
-    def get_question_ids():
-        query = Questions.select(Questions.id).where(Questions.type != 3)
-        question_ids = []
-        for question in query:
-            question_ids.append(question.id)
-        return question_ids
+    # # -----------------------Возвращает пол пользователя------------------#
+    # @staticmethod
+    # def get_question_ids():
+    #     query = Questions.select(Questions.id).where(Questions.type != 3)
+    #     question_ids = []
+    #     for question in query:
+    #         question_ids.append(question.id)
+    #     return question_ids
 
-    # ----------------------Возвращает пол пользователя------------------#
-    @staticmethod
-    def get_question(question_id):  # Очередной неотвеченный вопрос
-        query = Questions.select().where(Questions.id == question_id, Questions.type != 3)
-        if len(query) != 0:
-            text = query[0].text
-            return text
-        else:
-            return -1
+    # # -----------------------Возвращает пол пользователя------------------#
+    # @staticmethod
+    # def get_question(question_id):  # Очередной неотвеченный вопрос
+    #     query = Questions.select().where(Questions.id == question_id, Questions.type != 3)
+    #     if len(query) != 0:
+    #         text = query[0].text
+    #         return text
+    #     else:
+    #         return -1
 
-    # ----------------------Возвращает пол пользователя------------------#
+    # -----------------------Возвращает пол пользователя------------------#
     @staticmethod
     def get_question_answers(question_id):  # Все варианты ответов на вопрос
         query = Answers.select().where(Answers.question_id == question_id)
@@ -566,7 +620,7 @@ class Requests:
         else:
             return -1
 
-    # ----------------------Возвращает пол пользователя------------------#
+    # -----------------------Возвращает пол пользователя------------------#
     @staticmethod
     def get_question_with_answers(question_id):
         question_text = Requests.get_question(question_id)
@@ -576,50 +630,50 @@ class Requests:
         else:
             return -1
 
-    # ----------------------Возвращает пол пользователя------------------#
-    @staticmethod
-    def check(user_id, test_id, question_id):
-        q1 = Users.select(Users.id).where(Users.id == user_id)
-        if len(q1) != 0:
-            uid = 1
-        else:
-            uid = 0
-        q2 = Tests.select(Tests.id).where(Tests.id == test_id)
-        if len(q2) != 0:
-            tid = 1
-        else:
-            tid = 0
-        q3 = Questions.select(Questions.id).where(Questions.id == question_id)
-        if len(q3) != 0:
-            qid = 1
-        else:
-            qid = 0
-        if uid and tid and qid:
-            return 1
-        else:
-            return 0
+    # -----------------------Возвращает пол пользователя------------------#
+    # @staticmethod
+    # def check(user_id, test_id, question_id):
+    #     q1 = Users.select(Users.id).where(Users.id == user_id)
+    #     if len(q1) != 0:
+    #         uid = 1
+    #     else:
+    #         uid = 0
+    #     q2 = Tests.select(Tests.id).where(Tests.id == test_id)
+    #     if len(q2) != 0:
+    #         tid = 1
+    #     else:
+    #         tid = 0
+    #     q3 = Questions.select(Questions.id).where(Questions.id == question_id)
+    #     if len(q3) != 0:
+    #         qid = 1
+    #     else:
+    #         qid = 0
+    #     if uid and tid and qid:
+    #         return 1
+    #     else:
+    #         return 0
 
-    # ----------------------Возвращает пол пользователя------------------#
+    # -----------------------Возвращает пол пользователя------------------#
     @staticmethod
     def get_user_id(telegram_id):
         query = Users.select(Users.id).where(Users.telegram_id == telegram_id)
         return query[0].id
 
-    # ----------------------Возвращает пол пользователя------------------#
+    # -----------------------Возвращает пол пользователя------------------#
     @staticmethod
     def save_current_test(telegram_id, test_id):
         query = Users.get(Users.telegram_id == telegram_id)
         query.current_test = test_id
         query.save()
 
-    # ----------------------Возвращает пол пользователя------------------#
+    # -----------------------Возвращает пол пользователя------------------#
     @staticmethod
     def save_current_question(telegram_id, question_id):
         query = Users.get(Users.telegram_id == telegram_id)
         query.current_question = question_id
         query.save()
 
-    # ----------------------Возвращает пол пользователя------------------#
+    # -----------------------Возвращает пол пользователя------------------#
     @staticmethod
     def get_current_test(telegram_id):
         query = Users.get(Users.telegram_id == telegram_id)
@@ -629,7 +683,7 @@ class Requests:
         else:
             return current_test
 
-    # ----------------------Возвращает пол пользователя------------------#
+    # -----------------------Возвращает пол пользователя------------------#
     @staticmethod
     def get_current_question(telegram_id):
         query = Users.get(Users.telegram_id == telegram_id)
@@ -639,7 +693,7 @@ class Requests:
         else:
             return current_question
 
-    # ----------------------Возвращает пол пользователя------------------#
+    # -----------------------Возвращает пол пользователя------------------#
     @staticmethod
     def get_current_test_and_question(telegram_id):
         current_test = Requests.get_current_test(telegram_id)
