@@ -64,93 +64,96 @@ class Results(BaseModel):
 class Qsurgery(BaseModel):
     text = TextField(default=0)  # Текст вопроса
     type = IntegerField(default=0)  # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
+    score = IntegerField(default=0)
 
 
 # --------------------------------Вопросы по кардиологии-----------------#
 class Qcardio(BaseModel):
     text = TextField(default=0)  # Текст вопроса
     type = IntegerField(default=0)  # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
+    score = IntegerField(default=0)
 
 
 # --------------------------------Вопросы по дерматологии----------------#
 class Qdermo(BaseModel):
     text = TextField(default=0)  # Текст вопроса
     type = IntegerField(default=0)  # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
+    score = IntegerField(default=0)
 
 
 # --------------------------------Вопросы по эндокринологии--------------#
 class Qendo(BaseModel):
     text = TextField(default=0)  # Текст вопроса
     type = IntegerField(default=0)  # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
-
+    score = IntegerField(default=0)
 
 # --------------------------------Вопросы по гастроэнтерологии-----------#
 class Qgastro(BaseModel):
     text = TextField(default=0)  # Текст вопроса
     type = IntegerField(default=0)  # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
-
+    score = IntegerField(default=0)
 
 # --------------------------------Общие вопросы--------------------------#
 class Qgeneral(BaseModel):
     text = TextField(default=0)  # Текст вопроса
     type = IntegerField(default=0)  # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
-
+    score = IntegerField(default=0)
 
 # --------------------------------Вопросы по гинекологии-----------------#
 class Qgyne(BaseModel):
     text = TextField(default=0)  # Текст вопроса
     type = IntegerField(default=0)  # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
-
+    score = IntegerField(default=0)
 
 # --------------------------------Вопросы по ЛОР-------------------------#
 class Qlor(BaseModel):  # Вопросы по ЛОР
     text = TextField(default=0)  # Текст вопроса
     type = IntegerField(default=0)  # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
-
+    score = IntegerField(default=0)
 
 # --------------------------------Вопросы по неврологии------------------#
 class Qnevro(BaseModel):
     text = TextField(default=0)  # Текст вопроса
     type = IntegerField(default=0)  # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
-
+    score = IntegerField(default=0)
 
 # --------------------------------Вопросы по офтальмологии---------------#
 class Qofta(BaseModel):
     text = TextField(default=0)  # Текст вопроса
     type = IntegerField(default=0)  # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
-
+    score = IntegerField(default=0)
 
 # --------------------------------Вопросы по пульманологии---------------#
 class Qpulmo(BaseModel):
     text = TextField(default=0)  # Текст вопроса
     type = IntegerField(default=0)  # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
-
+    score = IntegerField(default=0)
 
 # --------------------------------Вопросы по стоматологии----------------#
 class Qstom(BaseModel):
     text = TextField(default=0)  # Текст вопроса
     type = IntegerField(default=0)  # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
-
+    score = IntegerField(default=0)
 
 # --------------------------------Вопросы по психиатрии------------------#
 class Qsycho(BaseModel):
     text = TextField(default=0)  # Текст вопроса
     type = IntegerField(default=0)  # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
-
+    score = IntegerField(default=0)
 
 # --------------------------------Вопросы по урологии------------------#
 class Quro(BaseModel):
     text = TextField(default=0)  # Текст вопроса
     type = IntegerField(default=0)  # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
-
+    score = IntegerField(default=0)
 
 # --------------------------------Данные об ответах на вопросы-----------#
 class Answers(BaseModel):
-    qtable = IntegerField(null=True)  # К какой таблице вопросов принадлежит вопрос
+    qtable = TextField(null=True)  # К какой таблице вопросов принадлежит вопрос
     qid = IntegerField(null=True)  # Айди вопроса в его таблице (по сути порядковый номер)
     answer = TextField(default=0)  # Вариант ответа на вопрос
     type = IntegerField(default=0)  # Тип вопроса 0-2
-    score = IntegerField(default=0)  # Количество баллов за данный вопрос
+    score = TextField(default=0)  # Количество баллов за данный вопрос
 
 
 # --------------------------------Данные об ответах пользователя---------#
