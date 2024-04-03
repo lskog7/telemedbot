@@ -73,6 +73,8 @@ class Call:
         elif q_answers == -1:
             print(1111)
             #Call.result(user)
+        elif q_answers == -2:
+            print(-2)
         else:
             for i in range(len(q_answers)):
                 question_keyboard.add(types.InlineKeyboardButton(text=f'{q_answers[i]}', callback_data=f'{i}'))

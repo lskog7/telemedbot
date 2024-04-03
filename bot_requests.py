@@ -196,9 +196,11 @@ class Requests:
         # Смотрим какие у пользователя таблицы в списке, какая текущая, какой вопрос сейчас (должна быть одна строка)
         q = Tests.select().where(Tests.user_id == user_id, Tests.status == 0)
         if len(q) == 0 or len(q) > 1:
-            return -1, -1
+            return -2, -2
         question_tables_list = q[0].qtables
         current_table_id = q[0].curqtable  # Возвращает string вида "00"
+        if current_table_id == "0":
+            current_table_id = "00"
         current_table = Requests.tables_dict[current_table_id]
         current_question = q[0].curq
         num_questions = len(current_table.select())
