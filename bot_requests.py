@@ -34,6 +34,20 @@ class Requests:
                    "12": Qsycho,
                    "13": Quro}
 
+    specialists_dict = {"01": "Хирург",
+                        "02": "Кардиолог",
+                        "03": "Дермотолог",
+                        "04": "Эндокринолог",
+                        "05": "Гастроэнтеролог",
+                        "06": "Гинеколог",
+                        "07": "ЛОР",
+                        "08": "Невролог",
+                        "09": "Офтальмолог",
+                        "10": "Пульмонолог",
+                        "11": "Стоматолог",
+                        "12": "Психиатр",
+                        "13": "Уролог"}
+
     # -------------Проверка на наличение пользователя в БД---------------#
     @staticmethod
     def users_in_db(telegram_id):
@@ -170,6 +184,15 @@ class Requests:
         else:
             return user_current_test
 
+    @staticmethod
+    def get_user_id(telegram_id):
+        # Мы узнаем, а что за юзер у нас отвечает
+        q = Users.select().where(Users.telegram_id == telegram_id)
+        if len(q) == 0 or len(q) > 1:
+            return -1
+        user_id = q[0].user_id
+        return user_id
+
     # ----------Возвращает текущий вопрос для данного пользователя--------#
     # Возвращает две переменные: ТЕКСТ_ВОПРОСА, [СПИСКО_ОТВЕТОВ]
     # При возникновении ошибки возвращает -1, -1
@@ -177,10 +200,7 @@ class Requests:
     @staticmethod
     def get_user_current_question_with_answers(telegram_id):
         # Получаем юзер айди по ТГ айди
-        q = Users.select().where(Users.telegram_id == telegram_id)
-        if len(q) == 0:
-            return -1
-        user_id = q[0].id
+        user_id = Requests.get_user_id(telegram_id)
 
         # Смотрим какие у пользователя таблицы в списке, какая текущая, какой вопрос сейчас (должна быть одна строка)
         q = Tests.select().where(Tests.user_id == user_id, Tests.status == 0)
@@ -309,7 +329,7 @@ class Requests:
                 return -1, -1
             result = q[0].qtables
             if result == "":
-                return -5,-5
+                return -5, -5
             q = Tests.get(user_id=user_id, status=0)
             if len(result) > 2:
                 q.qtables = result[2:]
@@ -351,15 +371,13 @@ class Requests:
         else:
             return -2, -2
 
-
-    #--------------------Запись ответа---------------------------#
+    # --------------------Запись ответа---------------------------#
+    # Возвращает -1 при ошибке
+    # При успешном выполнении ничего не возвращает
     @staticmethod
     def write_answer(telegram_id, answer):
         # Мы узнаем, а что за юзер у нас отвечает
-        q = Users.select().where(Users.telegram_id == telegram_id)
-        if len(q) == 0 or len(q) > 1:
-            return -1
-        user_id = q[0].user_id
+        user_id = Requests.get_user_id(telegram_id)
         # Узнаем, в каком тесте сейчас тыкается пользователь
         q = Tests.select().where(Tests.user_id == user_id, Tests.status == 0)
         if len(q) == 0 or len(q) > 1:
@@ -396,7 +414,8 @@ class Requests:
 
             Requests.save_current_question(telegram_id, current_question + 1)
 
-            query3 = Useranswers(user_id=user_id, test_id=current_test, question_id=current_question, answer_id=answer_id,
+            query3 = Useranswers(user_id=user_id, test_id=current_test, question_id=current_question,
+                                 answer_id=answer_id,
                                  score=answer_score)
             query3.save()
             return
@@ -416,7 +435,8 @@ class Requests:
             answer_id = query2[0].id
             answer_score = query2[0].score
             Requests.save_current_question(telegram_id, current_question + 1)
-            query3 = Useranswers(user_id=user_id, test_id=current_test, question_id=current_question, answer_id=answer_id,
+            query3 = Useranswers(user_id=user_id, test_id=current_test, question_id=current_question,
+                                 answer_id=answer_id,
                                  score=answer_score)
             query3.save()
             return
@@ -432,28 +452,42 @@ class Requests:
             answer_id = query2[0].id
             answer_score = 0
             Requests.save_current_question(telegram_id, current_question + 1)
-            query3 = Useranswers(user_id=user_id, test_id=current_test, question_id=current_question, answer_id=answer_id,
+            query3 = Useranswers(user_id=user_id, test_id=current_test, question_id=current_question,
+                                 answer_id=answer_id,
                                  score=answer_score, free_answer=answer)
             query3.save()
             return
 
-
     @staticmethod
-    def get_user_result(telegram_id, test_num):
-        user_tests = Requests.get_user_tests(telegram_id)
-        if user_tests != -1:
-            if len(user_tests) < test_num:
-                query = Results.select(Results.specialist_id).where(
-                    Results.test_id == user_tests[test_num]
-                )
-                specialists_ids = []
-                for spec in query:
-                    specialists_ids.append(spec.specialist_id)
-                return specialists_ids
+    def get_user_result(telegram_id):
+        result = []
+        # Опять получаем user_id
+        user_id = Requests.get_user_id(telegram_id)
+        # Выбираем последний тест
+        q = Tests.select().where(Tests.user_id == user_id).order_by(Tests.date.desc())
+        test_id = q[0].id
+        # Если score больше или равен количества вопросов с типом 0
+        # у данного специалиста, то мы добавляем его в результирующий лист
+        for i in Requests.tables_dict:
+            if i == "00":
+                continue
+            current_table = Requests.tables_dict[i]
+            q = Useranswers.select().where(Useranswers.user_id == user_id,
+                                           Useranswers.test_id == test_id,
+                                           Useranswers.table_id == i)
+            total_score = 0
+            for item in q:
+                tmp = item.score
+                total_score += tmp
+            # Количество ответов с типом 0 для данной таблицы
+            q = current_table.select().where(current_table.type == 0)
+            lnt = len(q)
+            if total_score >= lnt:
+                result.append(Requests.specialists_dict[i])
             else:
-                return -1
-        else:
-            return -1
+                continue
+        # И отдаем этот лист
+        return result
 
     # -----------------Возвращает информацию о специалистах--------------#
     @staticmethod
@@ -570,7 +604,6 @@ class Requests:
     def get_user_id(telegram_id):
         query = Users.select(Users.id).where(Users.telegram_id == telegram_id)
         return query[0].id
-
 
     # ----------------------Возвращает пол пользователя------------------#
     @staticmethod
