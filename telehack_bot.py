@@ -3,7 +3,6 @@ from telebot.types import Message
 from bot_requests import *
 from telebot import types
 from datetime import datetime
-from peewee import JOIN
 from sim_crypto import transform_password
 from time import sleep
 
@@ -39,6 +38,7 @@ class Call:
         if not chat_id:
             bot.send_message(user, text=q, reply_markup=parameters_keyboard, parse_mode='HTML')
         else:
+
             bot.edit_message_text(q, chat_id, message_id, parse_mode='HTML', reply_markup=parameters_keyboard)
         # bot.edit_message_reply_markup(chat_id, message_id, reply_markup=parameters_keyboard)
 
@@ -73,6 +73,7 @@ class Call:
             bot.register_next_step_handler(message, Get.user_answer)
         elif q_answers == -1:
             print(1111)
+            #Call.result(user)
         else:
             for i in range(len(q_answers)):
                 question_keyboard.add(types.InlineKeyboardButton(text=f'{q_answers[i]}', callback_data=f'{i}'))
@@ -95,153 +96,195 @@ class Call:
 class Get:
 
     @staticmethod
-    def start_surname(message: Message):
+    def surname(message: Message, g_type):
         user = message.from_user.id
         surname = message.text
         if surname in command_answers:
             bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите фамилию ещё раз')
-            bot.register_next_step_handler(message, Get.start_surname)
+            if g_type == 'start':
+                bot.register_next_step_handler(message, Get.surname, g_type='start')
+            else:
+                bot.register_next_step_handler(message, Get.surname, g_type='edit')
         else:
             if surname.isalpha() and len(surname) < 31:
                 Requests.save_user_surname(user, surname)
                 bot.send_message(user, text=emoji() + f'Введите Ваше имя')
-                bot.register_next_step_handler(message, Get.start_name)
+                if g_type == 'start':
+                    bot.register_next_step_handler(message, Get.name, g_type='start')
+                else:
+                    bot.register_next_step_handler(message, Get.name, g_type='edit')
             else:
                 bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите фамилию ещё раз')
-                bot.register_next_step_handler(message, Get.start_surname)
+                if g_type == 'start':
+                    bot.register_next_step_handler(message, Get.surname, g_type='start')
+                else:
+                    bot.register_next_step_handler(message, Get.surname, g_type='edit')
 
 
     @staticmethod
-    def start_name(message: Message):
+    def name(message: Message, g_type):
         user = message.from_user.id
         name = message.text
         if name in command_answers:
             bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите имя ещё раз')
-            bot.register_next_step_handler(message, Get.start_name)
+            if g_type == 'start':
+                bot.register_next_step_handler(message, Get.name, g_type='start')
+            else:
+                bot.register_next_step_handler(message, Get.name, g_type='edit')
         else:
             if name.isalpha() and len(name) < 31:
                 Requests.save_user_name(user, name)
                 bot.send_message(user, text=emoji() + f'Введите Ваше отчество')
-                bot.register_next_step_handler(message, Get.start_patronymic)
+                if g_type == 'start':
+                    bot.register_next_step_handler(message, Get.patronymic, g_type='start')
+                else:
+                    bot.register_next_step_handler(message, Get.patronymic, g_type='edit')
             else:
                 bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите имя ещё раз')
-                bot.register_next_step_handler(message, Get.start_name)
+                if g_type == 'start':
+                    bot.register_next_step_handler(message, Get.name, g_type='start')
+                else:
+                    bot.register_next_step_handler(message, Get.name, g_type='edit')
 
     @staticmethod
-    def start_patronymic(message: Message):
+    def patronymic(message: Message, g_type):
         user = message.from_user.id
         patronymic = message.text
         if patronymic in command_answers:
             bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите отчество ещё раз')
-            bot.register_next_step_handler(message, Get.start_patronymic)
+            if g_type == 'start':
+                bot.register_next_step_handler(message, Get.patronymic, g_type="start")
+            else:
+                bot.register_next_step_handler(message, Get.patronymic, g_type='edit')
         else:
             if patronymic.isalpha() and len(patronymic) < 31:
                 Requests.save_user_patronymic(user, patronymic)
-                bot.send_message(user,
-                                 text=emoji() + f'Записал ФИО:\n{Requests.get_user_surname(user)} {Requests.get_user_name(user)} {Requests.get_user_patronymic(user)}\n\nВведите дату рождения в формате: ДД.ММ.ГГГГ')
-                bot.register_next_step_handler(message, Get.start_age)
+                if g_type == 'start':
+                    bot.send_message(user,
+                                     text=emoji() + f'Записал ФИО:\n{Requests.get_user_surname(user)} {Requests.get_user_name(user)} {Requests.get_user_patronymic(user)}\n\nВведите дату рождения в формате: ДД.ММ.ГГГГ')
+                    bot.register_next_step_handler(message, Get.age, g_type='start')
+                else:
+                    Call.edit_parameters(user)
             else:
                 bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите отчество ещё раз')
-                bot.register_next_step_handler(message, Get.start_patronymic)
+                if g_type == 'start':
+                    bot.register_next_step_handler(message, Get.patronymic, g_type="start")
+                else:
+                    bot.register_next_step_handler(message, Get.patronymic, g_type='edit')
 
     @staticmethod
-    def start_age(message: Message):
+    def age(message: Message, g_type):
         user = message.from_user.id
         date_str = message.text
         if date_str in command_answers:
             bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите дату рождения ещё раз')
-            bot.register_next_step_handler(message, Get.start_age)
+            if g_type == 'start':
+                bot.register_next_step_handler(message, Get.age, g_type='start')
+            else:
+                bot.register_next_step_handler(message, Get.age, g_type='edit')
         else:
             if not all(char.isdigit() or char == '.' for char in date_str):
                 bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите дату рождения ещё раз')
-                bot.register_next_step_handler(message, Get.start_age)
+                if g_type == 'start':
+                    bot.register_next_step_handler(message, Get.age, g_type='start')
+                else:
+                    bot.register_next_step_handler(message, Get.age, g_type='edit')
             else:
                 date_format = "%d.%m.%Y"
                 try:
                     date_object = datetime.strptime(date_str, date_format).date()
                     if (date_object.year > 1900) and (date_object <= datetime.now().date()):
                         Requests.save_user_b_date(user, date_object)
-                        bot.send_message(user, text=emoji() + f'Записал дату рождения:\n{Requests.get_user_b_date(user)}\n\nВыберите пол:', reply_markup=small_keyboard('sex'))
+                        if g_type == 'start':
+                            bot.send_message(user, text=emoji() + f'Записал дату рождения:\n{Requests.get_user_b_date(user)}\n\nВыберите пол:', reply_markup=small_keyboard('sex'))
+                        else:
+                            Call.edit_parameters(user)
                     # bot.send_message(user, text=emoji() + 'Выберите пол', reply_markup=small_keyboard('sex'))
                     else:
                         bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите дату рождения ещё раз')
-                        bot.register_next_step_handler(message, Get.start_age)
+                        if g_type == 'start':
+                            bot.register_next_step_handler(message, Get.age, g_type='start')
+                        else:
+                            bot.register_next_step_handler(message, Get.age, g_type='edit')
                 except ValueError:
                     bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите дату рождения ещё раз')
-                    bot.register_next_step_handler(message, Get.start_age)
-
-    @staticmethod
-    def edit_surname(message: Message):
-        user = message.from_user.id
-        surname = message.text
-        if surname in command_answers:
-            bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите фамилию ещё раз')
-            bot.register_next_step_handler(message, Get.edit_surname)
-        else:
-            if surname.isalpha() and len(surname) < 31:
-                Requests.save_user_surname(user, surname)
-
-                bot.send_message(user, text=emoji() + f'Введите Ваше имя')
-                bot.register_next_step_handler(message, Get.edit_name)
-            else:
-                bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите фамилию ещё раз')
-                bot.register_next_step_handler(message, Get.edit_surname)
-
-    @staticmethod
-    def edit_name(message: Message):
-        user = message.from_user.id
-        name = message.text
-        if name in command_answers:
-            bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите имя ещё раз')
-            bot.register_next_step_handler(message, Get.edit_name)
-        else:
-            if name.isalpha() and len(name) < 31:
-                Requests.save_user_name(user, name)
-                bot.send_message(user, text=emoji() + f'Введите Ваше отчество')
-                bot.register_next_step_handler(message, Get.edit_patronymic)
-            else:
-                bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите имя ещё раз')
-                bot.register_next_step_handler(message, Get.edit_name)
-
-    @staticmethod
-    def edit_patronymic(message: Message):
-        user = message.from_user.id
-        patronymic = message.text
-        if patronymic in command_answers:
-            bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите отчество ещё раз')
-            bot.register_next_step_handler(message, Get.edit_patronymic)
-        else:
-            if patronymic.isalpha() and len(patronymic) < 31:
-                Requests.save_user_patronymic(user, patronymic)
-                Call.edit_parameters(user)
-            else:
-                bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите отчество ещё раз')
-                bot.register_next_step_handler(message, Get.edit_patronymic)
-
-    @staticmethod
-    def edit_age(message: Message):
-        user = message.from_user.id
-        date_str = message.text
-        if date_str in command_answers:
-            bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите дату рождения ещё раз')
-            bot.register_next_step_handler(message, Get.edit_age)
-        else:
-            if not all(char.isdigit() or char == '.' for char in date_str):
-                bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите дату рождения ещё раз')
-                bot.register_next_step_handler(message, Get.edit_age)
-            else:
-                date_format = "%d.%m.%Y"
-                try:
-                    date_object = datetime.strptime(date_str, date_format).date()
-                    if (date_object.year > 1900) and (date_object <= datetime.now().date()):
-                        Requests.save_user_b_date(user, date_object)
-                        Call.edit_parameters(user)
+                    if g_type == 'start':
+                        bot.register_next_step_handler(message, Get.age, g_type='start')
                     else:
-                        bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите дату рождения ещё раз')
-                        bot.register_next_step_handler(message, Get.edit_age)
-                except ValueError:
-                    bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите дату рождения ещё раз')
-                    bot.register_next_step_handler(message, Get.edit_age)
+                        bot.register_next_step_handler(message, Get.age, g_type='edit')
+
+    # @staticmethod
+    # def edit_surname(message: Message):
+    #     user = message.from_user.id
+    #     surname = message.text
+    #     if surname in command_answers:
+    #         bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите фамилию ещё раз')
+    #         bot.register_next_step_handler(message, Get.edit_surname)
+    #     else:
+    #         if surname.isalpha() and len(surname) < 31:
+    #             Requests.save_user_surname(user, surname)
+    #
+    #             bot.send_message(user, text=emoji() + f'Введите Ваше имя')
+    #             bot.register_next_step_handler(message, Get.edit_name)
+    #         else:
+    #             bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите фамилию ещё раз')
+    #             bot.register_next_step_handler(message, Get.edit_surname)
+
+    # @staticmethod
+    # def edit_name(message: Message):
+    #     user = message.from_user.id
+    #     name = message.text
+    #     if name in command_answers:
+    #         bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите имя ещё раз')
+    #         bot.register_next_step_handler(message, Get.edit_name)
+    #     else:
+    #         if name.isalpha() and len(name) < 31:
+    #             Requests.save_user_name(user, name)
+    #             bot.send_message(user, text=emoji() + f'Введите Ваше отчество')
+    #             bot.register_next_step_handler(message, Get.edit_patronymic)
+    #         else:
+    #             bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите имя ещё раз')
+    #             bot.register_next_step_handler(message, Get.edit_name)
+
+    # @staticmethod
+    # def edit_patronymic(message: Message):
+    #     user = message.from_user.id
+    #     patronymic = message.text
+    #     if patronymic in command_answers:
+    #         bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите отчество ещё раз')
+    #         bot.register_next_step_handler(message, Get.edit_patronymic)
+    #     else:
+    #         if patronymic.isalpha() and len(patronymic) < 31:
+    #             Requests.save_user_patronymic(user, patronymic)
+    #             Call.edit_parameters(user)
+    #         else:
+    #             bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите отчество ещё раз')
+    #             bot.register_next_step_handler(message, Get.edit_patronymic)
+
+    # @staticmethod
+    # def edit_age(message: Message):
+    #     user = message.from_user.id
+    #     date_str = message.text
+    #     if date_str in command_answers:
+    #         bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите дату рождения ещё раз')
+    #         bot.register_next_step_handler(message, Get.edit_age)
+    #     else:
+    #         if not all(char.isdigit() or char == '.' for char in date_str):
+    #             bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите дату рождения ещё раз')
+    #             bot.register_next_step_handler(message, Get.edit_age)
+    #         else:
+    #             date_format = "%d.%m.%Y"
+    #             try:
+    #                 date_object = datetime.strptime(date_str, date_format).date()
+    #                 if (date_object.year > 1900) and (date_object <= datetime.now().date()):
+    #                     Requests.save_user_b_date(user, date_object)
+    #                     Call.edit_parameters(user)
+    #                 else:
+    #                     bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите дату рождения ещё раз')
+    #                     bot.register_next_step_handler(message, Get.edit_age)
+    #             except ValueError:
+    #                 bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите дату рождения ещё раз')
+    #                 bot.register_next_step_handler(message, Get.edit_age)
 
     @staticmethod
     def user_answer(message: Message):
@@ -289,7 +332,7 @@ def callback_worker(call):
         bot.delete_message(chat_id, message_id)
     #     Call.result()
     elif call.data == 'parameters':
-        Call.edit_parameters(user, chat_id, call.message)
+        Call.edit_parameters(user, chat_id, message_id)
     elif call.data == 'yes':
         Requests.write_answer(user, 1)
         Call.question(user, call.message, chat_id)
@@ -321,7 +364,7 @@ def callback_worker(call):
     elif call.data == 'edit_surname':
         bot.edit_message_reply_markup(chat_id, message_id)
         bot.edit_message_text(emoji() + 'Введите Вашу фамилию', chat_id, message_id)
-        bot.register_next_step_handler(call.message, Get.edit_surname)
+        bot.register_next_step_handler(call.message, Get.surname, g_type='edit')
     elif call.data == 'edit_sex':
         bot.edit_message_reply_markup(chat_id, message_id)
         bot.edit_message_text(emoji() + 'Выберите пол', chat_id, message_id, reply_markup=small_keyboard('parameters'))
@@ -334,7 +377,7 @@ def callback_worker(call):
     elif call.data == 'edit_b_date':
         bot.edit_message_reply_markup(chat_id, message_id)
         bot.edit_message_text(emoji() + 'Введите дату рождения в формате: ДД.ММ.ГГГГ', chat_id, message_id)
-        bot.register_next_step_handler(call.message, Get.edit_age)
+        bot.register_next_step_handler(call.message, Get.age, g_type='edit')
     else:
         Requests.write_answer(user, int(call.data))
         Call.question(user, call.message, chat_id)
@@ -354,6 +397,7 @@ def commander(message: Message):
             pass
             # Call.result()
         elif command == 'botinfo':
+            bot.delete_message(message.chat.id, message.message_id)
             Call.bot_info(user)
         elif command == 'help':
             pass
@@ -376,7 +420,7 @@ def registration(message: Message):
             bot.send_message(user, text=q)
             Requests.write_user(user)
             bot.send_message(user, text=emoji() + f'Введите Вашу фамилию')
-            bot.register_next_step_handler(message, Get.start_surname)
+            bot.register_next_step_handler(message, Get.surname, g_type='start')
     else:
         Call.menu(user)
 
@@ -404,7 +448,7 @@ if __name__ == '__main__':
     command_answers = ['/start', '/menu', '/userinfo', '/botinfo', '/test', '/results', '/help']
     menu_answers = ['/start', '/menu']
     bot_owner = 706803803
-    Requests.get_user_name(bot_owner)
+    # Requests.get_user_name(bot_owner)
     bot.enable_save_next_step_handlers(delay=5)
     bot.load_next_step_handlers()
     bot.polling(none_stop=True)
