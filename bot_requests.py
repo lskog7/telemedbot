@@ -105,8 +105,6 @@ class Requests:
     @staticmethod
     def save_user_name(telegram_id, name):
         query = Users.get(Users.telegram_id == telegram_id)
-        if len(query) == 0:
-            return -1
         query.name = name
         query.save()
 
@@ -114,8 +112,6 @@ class Requests:
     @staticmethod
     def save_user_surname(telegram_id, surname):
         query = Users.get(Users.telegram_id == telegram_id)
-        if len(query) == 0:
-            return -1
         query.surname = surname
         query.save()
 
@@ -123,8 +119,6 @@ class Requests:
     @staticmethod
     def save_user_patronymic(telegram_id, patronymic):
         query = Users.get(Users.telegram_id == telegram_id)
-        if len(query) == 0:
-            return -1
         query.patronymic = patronymic
         query.save()
 
@@ -132,8 +126,6 @@ class Requests:
     @staticmethod
     def save_user_sex(telegram_id, sex):
         query = Users.get(Users.telegram_id == telegram_id)
-        if len(query) == 0:
-            return -1
         query.sex = sex
         query.save()
 
@@ -141,8 +133,6 @@ class Requests:
     @staticmethod
     def save_user_b_date(telegram_id, date_str):
         query = Users.get(Users.telegram_id == telegram_id)
-        if len(query) == 0:
-            return -1
         query.b_date = date_str
         query.save()
 

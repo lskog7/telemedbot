@@ -212,8 +212,8 @@ class Get:
 
         answer = message.text
         if answer in command_answers:
-            bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите дату рождения ещё раз')
-            # bot.register_next_step_handler(message, Get.user_answer)
+            bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите ответ ещё раз')
+            bot.register_next_step_handler(message, Get.user_answer)
         else:
             try:
                 text = float(answer)
@@ -222,8 +222,9 @@ class Get:
                         Requests.write_answer(user, str(int(text)))
                         Call.question(user, message, q_type=1)
                     else:
-                        Requests.write_answer(user, str(text))
-                        Call.question(user, message, q_type=1)
+                        if text < 32 or text > 45:
+                            Requests.write_answer(user, str(text))
+                            Call.question(user, message, q_type=1)
             except ValueError:
                 Requests.write_answer(user, answer)
                 Call.question(user, message, q_type=1)
@@ -242,7 +243,7 @@ def callback_worker(call):
     elif call.data == 'start_test':
         # bot.delete_message(chat_id, message_id)
         if not Requests.get_current_test(user):
-            Requests.start_new_test(user)
+            Requests.start_test(user)
             Call.question(user, call.message, chat_id)
         else:
             Call.question(user, call.message, chat_id)
