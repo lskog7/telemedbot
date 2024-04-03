@@ -29,7 +29,7 @@ class Call:
 
     @staticmethod
     def edit_parameters(user, chat_id=0, message_id=0):
-        name, surname, patronymic, sex, date_of_birth = Requests.get_user_info(user, key, iv)
+        name, surname, patronymic, sex, date_of_birth = Requests.get_user_info(user)
         parameters_keyboard = types.InlineKeyboardMarkup()
         parameters_keyboard.add(types.InlineKeyboardButton(text='Изменить ФИО', callback_data='edit_surname'))
         parameters_keyboard.add(types.InlineKeyboardButton(text='Изменить пол', callback_data='edit_sex'))
@@ -59,7 +59,6 @@ class Call:
         message_id = message.message_id
         q_text, q_answers = Requests.get_user_current_question_with_answers(user)
         question_keyboard = types.InlineKeyboardMarkup()
-        print(q_answers)
         if q_answers == 0:
             question_keyboard.add(types.InlineKeyboardButton(text='Да', callback_data='yes'),types.InlineKeyboardButton(text='Нет', callback_data='no'))
             if not q_type:
@@ -72,6 +71,8 @@ class Call:
             else:
                 bot.send_message(user, q_text, parse_mode='HTML', reply_markup=question_keyboard)
             bot.register_next_step_handler(message, Get.user_answer)
+        elif q_answers == -1:
+            print(1111)
         else:
             for i in range(len(q_answers)):
                 question_keyboard.add(types.InlineKeyboardButton(text=f'{q_answers[i]}', callback_data=f'{i}'))
@@ -83,7 +84,11 @@ class Call:
     @staticmethod
     def bot_info(user):
         bot_info_keyboard = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(text='ᐱ', callback_data='delete_roll_up'))
-        q = emoji() + '<b>Описание бота</b>\n\nКакое-то описать'
+        q = emoji() + '''<b>Описание бота</b>\n\nДобро пожаловать в медицинского ассистента! 🤖
+
+Я чат-бот, разработанный для автоматической маршрутизации пациентов к соответствующим специалистам. Ответьте на несколько вопросов, и я помогу определить целевого врача для вашего обращения. <b> Моя цель - обеспечить эффективную направленность к медицинской помощи. </b> Давайте начнем!
+
+Я создан на хакатоне в рамках IV Открытой конференции молодых ученых Центра диагностики и телемедицины (03-04 апреля 2024 г.)'''
         bot.send_message(user, q, parse_mode='HTML', reply_markup=bot_info_keyboard)
 
 
@@ -98,7 +103,7 @@ class Get:
             bot.register_next_step_handler(message, Get.start_surname)
         else:
             if surname.isalpha() and len(surname) < 31:
-                Requests.save_user_surname(user, surname, key, iv)
+                Requests.save_user_surname(user, surname)
                 bot.send_message(user, text=emoji() + f'Введите Ваше имя')
                 bot.register_next_step_handler(message, Get.start_name)
             else:
@@ -115,7 +120,7 @@ class Get:
             bot.register_next_step_handler(message, Get.start_name)
         else:
             if name.isalpha() and len(name) < 31:
-                Requests.save_user_name(user, name, key, iv)
+                Requests.save_user_name(user, name)
                 bot.send_message(user, text=emoji() + f'Введите Ваше отчество')
                 bot.register_next_step_handler(message, Get.start_patronymic)
             else:
@@ -131,9 +136,9 @@ class Get:
             bot.register_next_step_handler(message, Get.start_patronymic)
         else:
             if patronymic.isalpha() and len(patronymic) < 31:
-                Requests.save_user_patronymic(user, patronymic, key, iv)
+                Requests.save_user_patronymic(user, patronymic)
                 bot.send_message(user,
-                                 text=emoji() + f'Записал ФИО:\n{Requests.get_user_surname(user, key, iv)} {Requests.get_user_name(user, key, iv)} {Requests.get_user_patronymic(user, key, iv)}\n\nВведите дату рождения в формате: ДД.ММ.ГГГГ')
+                                 text=emoji() + f'Записал ФИО:\n{Requests.get_user_surname(user)} {Requests.get_user_name(user)} {Requests.get_user_patronymic(user)}\n\nВведите дату рождения в формате: ДД.ММ.ГГГГ')
                 bot.register_next_step_handler(message, Get.start_age)
             else:
                 bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите отчество ещё раз')
@@ -174,7 +179,7 @@ class Get:
             bot.register_next_step_handler(message, Get.edit_surname)
         else:
             if surname.isalpha() and len(surname) < 31:
-                Requests.save_user_surname(user, surname, key, iv)
+                Requests.save_user_surname(user, surname)
 
                 bot.send_message(user, text=emoji() + f'Введите Ваше имя')
                 bot.register_next_step_handler(message, Get.edit_name)
@@ -191,7 +196,7 @@ class Get:
             bot.register_next_step_handler(message, Get.edit_name)
         else:
             if name.isalpha() and len(name) < 31:
-                Requests.save_user_name(user, name, key, iv)
+                Requests.save_user_name(user, name)
                 bot.send_message(user, text=emoji() + f'Введите Ваше отчество')
                 bot.register_next_step_handler(message, Get.edit_patronymic)
             else:
@@ -207,7 +212,7 @@ class Get:
             bot.register_next_step_handler(message, Get.edit_patronymic)
         else:
             if patronymic.isalpha() and len(patronymic) < 31:
-                Requests.save_user_patronymic(user, patronymic, key, iv)
+                Requests.save_user_patronymic(user, patronymic)
                 Call.edit_parameters(user)
             else:
                 bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите отчество ещё раз')
@@ -367,7 +372,7 @@ def registration(message: Message):
     user = message.from_user.id
     if not Requests.users_in_db(user):
         if message.from_user.is_bot is False:
-            q = emoji() + 'Привет'
+            q = emoji() + 'Приветствую! Я - ваш персональный помощник для предварительной маршрутизации вашего визита к врачу. Чтобы максимально эффективно организовать ваше обращение, мне нужно задать несколько вопросов.'
             bot.send_message(user, text=q)
             Requests.write_user(user)
             bot.send_message(user, text=emoji() + f'Введите Вашу фамилию')
@@ -396,26 +401,20 @@ def small_keyboard(keyboard_type):
 
 if __name__ == '__main__':
     print(bot.get_me())
-    iv = bytes.fromhex('6d120b35d686c632e4d4e42a1e469de9')
-    key = transform_password('Gm9BbWmMH4UjNKislgnMPAJn3qVOP1Ay')
     command_answers = ['/start', '/menu', '/userinfo', '/botinfo', '/test', '/results', '/help']
     menu_answers = ['/start', '/menu']
     bot_owner = 706803803
-    try:
+    Requests.get_user_name(bot_owner)
+    bot.enable_save_next_step_handlers(delay=5)
+    bot.load_next_step_handlers()
+    bot.polling(none_stop=True)
+    # bot.infinity_polling()
+    # while True:
+    #     try:
+    #         bot.polling(none_stop=True)
+    #     except:
+    #         sleep(1)
 
-        Requests.get_user_name(bot_owner, key, iv)
-        bot.enable_save_next_step_handlers(delay=5)
-        bot.load_next_step_handlers()
-        bot.polling(none_stop=True)
-        # bot.infinity_polling()
-        # while True:
-        #     try:
-        #         bot.polling(none_stop=True)
-        #     except:
-        #         sleep(1)
-    except KeyError:
-        print('Пошёл нахуй!')
-        exit(-1)
 
     # bot.set_chat_menu_button()
 

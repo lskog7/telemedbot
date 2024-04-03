@@ -1,7 +1,7 @@
 from db_model import Users, Tests, Specialists, Results, Questions, Answers, Useranswers
 from peewee import JOIN
 from datetime import datetime
-from sim_crypto import encrypt, decrypt
+
 
 
 class Requests:
@@ -27,21 +27,21 @@ class Requests:
 
     # Возвращает имя выбранного пользователя
     @staticmethod
-    def get_user_name(telegram_id, key, iv):
+    def get_user_name(telegram_id):
         query = Users.select().where(Users.telegram_id == telegram_id)
-        return decrypt(query[0].name, key, iv)
+        return query[0].name
 
     # Возвращает фамилию выбранного пользователя
     @staticmethod
-    def get_user_surname(telegram_id, key, iv):
+    def get_user_surname(telegram_id):
         query = Users.select().where(Users.telegram_id == telegram_id)
-        return decrypt(query[0].surname, key, iv)
+        return query[0].surname
 
     # Возвращает отчество выбранного пользователя
     @staticmethod
-    def get_user_patronymic(telegram_id, key, iv):
+    def get_user_patronymic(telegram_id):
         query = Users.select().where(Users.telegram_id == telegram_id)
-        return decrypt(query[0].patronymic, key, iv)
+        return query[0].patronymic
 
     # Возвращает дату рождения выбранного пользователя
     @staticmethod
@@ -51,23 +51,23 @@ class Requests:
 
     # Сохраняет имя пользователя
     @staticmethod
-    def save_user_name(telegram_id, name, key, iv):
+    def save_user_name(telegram_id, name):
         query = Users.get(Users.telegram_id == telegram_id)
-        query.name = encrypt(name, key, iv)
+        query.name = name
         query.save()
 
     # Сохраняет фамилия пользователя
     @staticmethod
-    def save_user_surname(telegram_id, surname, key, iv):
+    def save_user_surname(telegram_id, surname):
         query = Users.get(Users.telegram_id == telegram_id)
-        query.surname = encrypt(surname, key, iv)
+        query.surname = surname
         query.save()
 
     # Сохраняет отчество пользователя
     @staticmethod
-    def save_user_patronymic(telegram_id, patronymic, key, iv):
+    def save_user_patronymic(telegram_id, patronymic):
         query = Users.get(Users.telegram_id == telegram_id)
-        query.patronymic = encrypt(patronymic, key, iv)
+        query.patronymic = patronymic
         query.save()
 
     # Сохраняет пол пользователя
@@ -149,14 +149,14 @@ class Requests:
         return specialists_info
 
     @staticmethod
-    def get_user_info(telegram_id, key, iv):
+    def get_user_info(telegram_id):
         query = Users.select().where(Users.telegram_id == telegram_id)
         if len(query) != 0:
             user = query[0]
             info = [0 for _ in range(5)]
-            info[0] = decrypt(user.name, key, iv)
-            info[1] = decrypt(user.surname, key, iv)
-            info[2] = decrypt(user.patronymic, key, iv)
+            info[0] = user.name
+            info[1] = user.surname
+            info[2] = user.patronymic
             info[3] = Users.SEX_CHOICES[user.sex][1]
             info[4] = user.b_date.date()
             return info
@@ -409,7 +409,15 @@ class Requests:
         query = Questions.select().where(Questions.id == current_question)
         if query[0].type == 3:
             Requests.save_current_question(telegram_id, current_question+1)
-            return
+            current_question = Requests.get_current_question(telegram_id)  # id текущего впороса
+            if current_question == -1:
+                return -1
+            if current_question == 0:
+                Requests.save_current_question(telegram_id, 1)
+                return Requests.get_question_with_answers(1)
+            else:
+                # Requests.save_current_question(telegram_id, current_question)
+                return Requests.get_question_with_answers(current_question)
         if current_question == -1:
             return -1
         if current_question == 0:
