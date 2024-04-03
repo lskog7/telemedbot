@@ -361,15 +361,22 @@ class Requests:
             return -1
         user_id = q[0].user_id
         # Узнаем, в каком тесте сейчас тыкается пользователь
+        q = Tests.select().where(Tests.user_id == user_id, Tests.status == 0)
+        if len(q) == 0 or len(q) > 1:
+            return -1
+        current_test = q[0].id
+        # Узнаем, в какой таблице вопросов сидит пользователь и дальше номер вопроса
+        current_table = Requests.tables_dict[q[0].curqtable]
+        current_question = q[0].curq
 
-        query1 = Questions.select().where(Questions.id == question_id, Questions.type != 3)
+        query1 = current_table.select().where(current_table.id == current_question)
         if len(query1) == 0:
             return -1
 
         # Обработка вопросов 0 типа
         if query1[0].type == 0:
             query2 = Answers.select(Answers.id, Answers.question_id, Answers.score).where(
-                Answers.question_id == question_id, Answers.type == 0)
+                Answers.question_id == current_question, Answers.type == 0)
 
             if len(query2) == 0:
                 return -1
@@ -387,9 +394,9 @@ class Requests:
             else:
                 return -1
 
-            Requests.save_current_question(telegram_id, question_id + 1)
+            Requests.save_current_question(telegram_id, current_question + 1)
 
-            query3 = Useranswers(user_id=user_id, test_id=test_id, question_id=question_id, answer_id=answer_id,
+            query3 = Useranswers(user_id=user_id, test_id=current_test, question_id=current_question, answer_id=answer_id,
                                  score=answer_score)
             query3.save()
             return
@@ -398,18 +405,18 @@ class Requests:
         if query1[0].type == 1:
             answer = int(answer)
 
-            answer_for_first = Requests.get_question_answers(question_id)[answer]
+            answer_for_first = Requests.get_question_answers(current_question)[answer]
 
             query2 = Answers.select(Answers.id, Answers.question_id, Answers.score).where(
-                Answers.question_id == question_id, Answers.answer == answer_for_first, Answers.type == 1)
+                Answers.question_id == current_question, Answers.answer == answer_for_first, Answers.type == 1)
 
             if len(query2) == 0:
                 return -1
 
             answer_id = query2[0].id
             answer_score = query2[0].score
-            Requests.save_current_question(telegram_id, question_id + 1)
-            query3 = Useranswers(user_id=user_id, test_id=test_id, question_id=question_id, answer_id=answer_id,
+            Requests.save_current_question(telegram_id, current_question + 1)
+            query3 = Useranswers(user_id=user_id, test_id=current_test, question_id=current_question, answer_id=answer_id,
                                  score=answer_score)
             query3.save()
             return
@@ -417,15 +424,15 @@ class Requests:
         # Обработка вопросов 2 типа
         if query1[0].type == 2:
             query2 = Answers.select().where(
-                Answers.question_id == question_id, Answers.type == 2)
+                Answers.question_id == current_question, Answers.type == 2)
 
             if len(query2) == 0:
                 return -1
 
             answer_id = query2[0].id
             answer_score = 0
-            Requests.save_current_question(telegram_id, question_id + 1)
-            query3 = Useranswers(user_id=user_id, test_id=test_id, question_id=question_id, answer_id=answer_id,
+            Requests.save_current_question(telegram_id, current_question + 1)
+            query3 = Useranswers(user_id=user_id, test_id=current_test, question_id=current_question, answer_id=answer_id,
                                  score=answer_score, free_answer=answer)
             query3.save()
             return

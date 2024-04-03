@@ -158,7 +158,7 @@ class Answers(BaseModel):
 class Useranswers(BaseModel):
     user_id = IntegerField() # Айди пользователя, которому принадлежит ответ
     test_id = IntegerField() # Айди теста, к которому принадлежит ответ
-    table_id = TextField # Название таблицы к которой принадлежит вопрос
+    table_id = TextField() # Название таблицы к которой принадлежит вопрос
     question_id = IntegerField() # Айди вопроса из соответствующей таблицы
     answer_id = IntegerField() # Айди ответа
     score = IntegerField(default=0) # Счет, подтягивается из ответа
