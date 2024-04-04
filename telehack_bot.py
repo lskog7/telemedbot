@@ -4,6 +4,7 @@ from bot_requests import *
 from telebot import types
 from datetime import datetime
 from util import Texts, Utilities
+import re
 from sim_crypto import transform_password
 from time import sleep
 
@@ -56,7 +57,9 @@ class Call:
     @staticmethod
     def question(user, message, chat_id=0, q_type=0):
         message_id = message.message_id
+        print(message_id)
         q_text, q_answers = Requests.get_user_current_question_with_answers(user)
+        print(q_text, q_answers)
         question_keyboard = types.InlineKeyboardMarkup()
         if q_answers == 0:
             question_keyboard.add(types.InlineKeyboardButton(text='Да', callback_data='yes'),types.InlineKeyboardButton(text='Нет', callback_data='no'))
@@ -219,17 +222,24 @@ class Get:
         else:
             try:
                 text = float(answer)
-                if text > 0:
+                if text >= 0:
                     if text == round(text):
                         Requests.write_answer(user, str(int(text)))
                         Call.question(user, message, q_type=1)
                     else:
-                        if text < 32 or text > 45:
+                        if text > 32 or text < 45:
                             Requests.write_answer(user, str(text))
                             Call.question(user, message, q_type=1)
+                        else:
+                            bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите ответ ещё раз')
+                            bot.register_next_step_handler(message, Get.user_answer)
+                else:
+                    bot.send_message(user, emoji() + 'Неверный формат ввода\nВведите ответ ещё раз')
+                    bot.register_next_step_handler(message, Get.user_answer)
             except ValueError:
                 Requests.write_answer(user, answer)
                 Call.question(user, message, q_type=1)
+
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_worker(call):

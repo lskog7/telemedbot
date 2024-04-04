@@ -45,7 +45,7 @@ class Tests(BaseModel):
     status = IntegerField(default=0)  # 0 - если тест активен, 1 - если тест завершен
     qtables = TextField(default=0)  # Список таблиц вопросов, которые необходимо пройти пользователю помимо основной
     curqtable = TextField(default=0)  # Такущая таблица из дополнительных, в которой сидит пользователь
-    curq = IntegerField(default=0)  # Текущий вопрос из текущей таблицы
+    curq = IntegerField(default=1)  # Текущий вопрос из текущей таблицы
 
 
 # --------------------------------Данные о специалистах------------------#
@@ -97,7 +97,7 @@ class Qgastro(BaseModel):
 class Qgeneral(BaseModel):
     text = TextField(default=0)  # Текст вопроса
     type = IntegerField(default=0)  # Тип: 0-2 (0-да/нет, 1-варианты, 2-свободный)
-    score = IntegerField(default=0)
+    # score = IntegerField(default=0)
 
 # --------------------------------Вопросы по гинекологии-----------------#
 class Qgyne(BaseModel):

@@ -203,15 +203,16 @@ class Requests:
             current_table_id = "00"
         current_table = Requests.tables_dict[current_table_id]
         current_question = q[0].curq
+        print(current_table)
         num_questions = len(current_table.select())
 
         # Смотрим на наличие нулей (это значит, что показатели стандартные)
         # Если текущий лист таблиц вопросов это чисто нолик, то мы начинаем общий опрос
-        if question_tables_list == 0 and current_question < num_questions:
+        if question_tables_list == "0" and current_question < num_questions:
             table = Qgeneral
             # Тогда просто переходим к вопросам генеральным
             # Получаем текст вопроса
-            q = table.Select().where(table.id == current_question)
+            q = table.select().where(table.id == current_question)
             question_text = q[0].text
             question_type = q[0].type
             # Выбираем какой у нас тип вопроса
@@ -219,7 +220,8 @@ class Requests:
                 return question_text, 0
             elif question_type == 1:
                 # Получаем ответы на вопрос
-                q4 = Answers.select().where(Answers.qtable == current_table, Answers.qid == current_question)
+                print(111111, current_table.__name__, type(current_table))
+                q4 = Answers.select().where(Answers.qtable == current_table.__name__.lower(), Answers.qid == current_question)
                 ans = []
                 for item in q4:
                     ans.append(item.answer)
@@ -230,7 +232,7 @@ class Requests:
                 return -1, -1
 
         # Если основной закончился
-        elif question_tables_list == 0 and current_question >= num_questions:
+        elif question_tables_list == "0" and current_question >= num_questions:
             # Смотрим куда у нас направляет пользователя (считаем скор)
             q = Useranswers.select().where(Useranswers.table_id == "qgeneral", Useranswers.score != "0")
             totalway = ""
@@ -287,16 +289,18 @@ class Requests:
                 return -1, -1
 
         # Пока не закончились вопросы в доп списке
-        elif question_tables_list != 0 and current_question < num_questions:
+        elif question_tables_list != "0" and current_question < num_questions:
             q = Tests.select().where(Tests.user_id == user_id, Tests.status == 0)
             if len(q) == 0 or len(q) > 1:
                 return -1, -1
 
             current_table_id = q[0].curqtable  # Возвращает string вида "00"
+            if current_table_id == "0":
+                current_table_id = "00"
             current_table = Requests.tables_dict[current_table_id]
             # Тогда просто переходим к вопросам генеральным
             # Получаем текст вопроса
-            q = current_table.Select().where(current_table.id == current_question)
+            q = current_table.select().where(current_table.id == current_question)
             question_text = q[0].text
             question_type = q[0].type
             # Выбираем какой у нас тип вопроса
@@ -315,7 +319,7 @@ class Requests:
                 return -1, -1
 
         # Если закончились вопросы в доп списке
-        elif question_tables_list != 0 and current_question >= num_questions:
+        elif question_tables_list != "0" and current_question >= num_questions:
             # Смотрим куда у нас направляет пользователя (считаем скор)
             q = Tests.select().where(Tests.user_id == user_id, Tests.status == 0)
             if len(q) == 0 or len(q) > 1:
@@ -379,7 +383,10 @@ class Requests:
             return -1
         current_test = q[0].id
         # Узнаем, в какой таблице вопросов сидит пользователь и дальше номер вопроса
-        current_table = Requests.tables_dict[q[0].curqtable]
+        if q[0].curqtable == "0":
+            current_table = Requests.tables_dict["00"]
+        else:
+            current_table = Requests.tables_dict[q[0].curqtable]
         current_question = q[0].curq
         # Смотрим на какой вопрос отвечает пользователь сейчас и сохраняем его score
         query1 = current_table.select().where(current_table.id == current_question)
@@ -420,11 +427,13 @@ class Requests:
             # Получаем айди (номер) ответа
             answer_idx = int(answer)
             # Достаем список возможных ответов для данного вопроса
-            q = Answers.select().where(Answers.qtable == current_table, Answers.qid == current_question)
+            print(current_table, current_question)
+            q = Answers.select().where(Answers.qtable == current_table.__name__.lower(), Answers.qid == current_question)
             if len(q) == 0:
                 return -1
             answer_score = q[answer_idx].score
             answer_id = q[answer_idx].id
+            print(answer_score, answer_id)
             # Записываем ответ в таблицу Useranswers
             query3 = Useranswers(user_id=user_id,
                                  test_id=current_test,
@@ -458,6 +467,7 @@ class Requests:
                                  free_answer=answer)
             query3.save()
             # Сохраняем пользователю новый текущий вопрос - то есть текущий + 1
+            print(current_question+1)
             query = Tests.get(Tests.user_id == user_id, Tests.status == 0)
             query.curq = current_question + 1
             query.save()
