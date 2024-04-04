@@ -157,6 +157,25 @@ class Requests:
     # ----------------Если есть активный - продолжает его----------------#
     # ----------------Если нет активных - то начинает новый--------------#
     # Возвращает 0 если активных нет и создает новый, возвращает номер активного, если он есть
+
+    @staticmethod
+    def get_key_by_value(dictionary, value):
+        for key, val in dictionary.items():
+            if val == value:
+                return key
+        return None
+
+    @staticmethod
+    def is_type_two(telegram_id):
+        active_tests = Tests.select().where(Tests.user_id == Requests.get_user_id(telegram_id), Tests.status == 0)
+        if len(active_tests) == 0:
+            return 0
+        else:
+            curq = active_tests[0].curq
+            current_table = Requests.tables_dict[active_tests[0].curqtable]
+            if current_table.select().where(current_table.id == curq)[0].type == 2:
+                return 1
+
     @staticmethod
     def start_test(telegram_id):
         # Проверяем, есть ли у пользователя активные тесты
@@ -212,9 +231,7 @@ class Requests:
             current_table_id = "00"
         current_table = Requests.tables_dict[current_table_id]
         current_question = q[0].curq
-        print(1, current_table)
         num_questions = len(current_table.select())
-
         # Смотрим на наличие нулей (это значит, что показатели стандартные)
         # Если текущий лист таблиц вопросов это чисто нолик, то мы начинаем общий опрос
         if question_tables_list == "0" and current_question < num_questions:
@@ -334,6 +351,7 @@ class Requests:
                 return -1, -1
             result = q[0].qtables
             if result == "":
+
                 return -5, -5
             q = Tests.get(user_id=user_id, status=0)
             if len(result) > 2:
@@ -352,8 +370,6 @@ class Requests:
             current_table_id = q[0].curqtable  # Возвращает string вида "00"
             current_table = Requests.tables_dict[current_table_id]
             current_question = q[0].curq
-
-            print(123, current_question, current_table, current_table_id)
             # Получаем текст вопроса
             q = current_table.select().where(current_table.id == current_question)
             question_text = q[0].text
@@ -405,8 +421,7 @@ class Requests:
         # ---------------------------------------------------------------------------
         # Обработка вопросов 0 типа
         if query1[0].type == 0:
-            query2 = Answers.select().where(Answers.qid == current_question,
-                                            Answers.type == 0)
+            query2 = Answers.select().where(Answers.qtable == current_table.__name__.lower(), Answers.qid == current_question)
             if len(query2) == 0:
                 return -1
             answer = int(answer)
@@ -427,8 +442,12 @@ class Requests:
                                  score=answer_score)
             query3.save()
             # Сохраняем пользователю новый текущий вопрос - то есть текущий + 1
+
+            value_to_find = current_table
+            key_found = Requests.get_key_by_value(Requests.tables_dict, value_to_find)
             query = Tests.get(Tests.user_id == user_id, Tests.status == 0)
             query.curq = current_question + 1
+            query.curqtable = key_found
             query.save()
             return
         # --------------------------------------------------------------------------
@@ -437,13 +456,11 @@ class Requests:
             # Получаем айди (номер) ответа
             answer_idx = int(answer)
             # Достаем список возможных ответов для данного вопроса
-            print(current_table, current_question)
             q = Answers.select().where(Answers.qtable == current_table.__name__.lower(), Answers.qid == current_question)
             if len(q) == 0:
                 return -1
             answer_score = q[answer_idx].score
             answer_id = q[answer_idx].id
-            print(answer_score, answer_id)
             # Записываем ответ в таблицу Useranswers
             query3 = Useranswers(user_id=user_id,
                                  test_id=current_test,
@@ -453,8 +470,12 @@ class Requests:
                                  score=answer_score)
             query3.save()
             # Сохраняем пользователю новый текущий вопрос - то есть текущий + 1
+
+            value_to_find = current_table
+            key_found = Requests.get_key_by_value(Requests.tables_dict, value_to_find)
             query = Tests.get(Tests.user_id == user_id, Tests.status == 0)
             query.curq = current_question + 1
+            query.curqtable = key_found
             query.save()
             return
         # ------------------------------------------------------------------------------
@@ -477,9 +498,11 @@ class Requests:
                                  free_answer=answer)
             query3.save()
             # Сохраняем пользователю новый текущий вопрос - то есть текущий + 1
-            print(current_question+1)
+            value_to_find = current_table
+            key_found = Requests.get_key_by_value(Requests.tables_dict, value_to_find)
             query = Tests.get(Tests.user_id == user_id, Tests.status == 0)
             query.curq = current_question + 1
+            query.curqtable = key_found
             query.save()
             return
         else:
@@ -503,18 +526,21 @@ class Requests:
             current_table = Requests.tables_dict[i]
             q = Useranswers.select().where(Useranswers.user_id == user_id,
                                            Useranswers.test_id == test_id,
-                                           Useranswers.table_id == i)
+                                           Useranswers.table_id == current_table.__name__.lower())
             total_score = 0
             for item in q:
                 tmp = item.score
-                total_score += tmp
+                total_score += int(tmp)
             # Количество ответов с типом 0 для данной таблицы
             q = current_table.select().where(current_table.type == 0)
-            lnt = len(q)
-            if total_score >= lnt:
+            if total_score >= len(q):
                 result.append(Requests.specialists_dict[i])
             else:
                 continue
+        # ставим статус теста 1
+        query = Tests.get(Tests.id == test_id)
+        query.status = 1
+        query.save()
         # И отдаем этот лист
         return result
 

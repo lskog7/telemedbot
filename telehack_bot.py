@@ -78,6 +78,7 @@ class Call:
             #Call.result(user)
         elif q_answers == -5:
             print(1111)
+            bot.edit_message_text('финиш', chat_id, message_id)
             print(Requests.get_user_result(user))
             #Call.result(user)
         elif q_answers == -2:
@@ -303,11 +304,15 @@ def callback_worker(call):
         bot.edit_message_reply_markup(chat_id, message_id)
         bot.edit_message_text(emoji() + 'Введите дату рождения в формате: ДД.ММ.ГГГГ', chat_id, message_id)
         bot.register_next_step_handler(call.message, Get.age, g_type='edit')
+    # elif call.data == 'skip':
+    #     bot.disable_save_next_step_handlers()
+    #     bot.enable_save_next_step_handlers()
+    #     Call.edit_parameters(user, chat_id, message_id)
     else:
         Requests.write_answer(user, int(call.data))
         Call.question(user, call.message, chat_id)
 
-@bot.message_handler(commands=['userinfo', 'botinfo', 'test', 'results', 'help'])
+@bot.message_handler(commands=['userinfo', 'botinfo', 'test', 'results', 'help', 'key'])
 def commander(message: Message):
     user = message.from_user.id
     if Requests.users_in_db(user):
@@ -324,6 +329,12 @@ def commander(message: Message):
             Call.bot_info(user)
         elif command == 'help':
             pass
+        # elif command == 'key':
+        #     keyboard = types.InlineKeyboardMarkup()
+        #     keyboard.add(types.InlineKeyboardButton(text='Пропустить', callback_data='skip'))
+        #     bot.send_message(user, emoji() + 'тест', reply_markup=keyboard)
+        #     # bot.edit_message_text(emoji() + 'Введите дату рождения в формате: ДД.ММ.ГГГГ', message.chat.id, message.message_id, reply_markup=keyboard)
+        #     bot.register_next_step_handler(message, Get.user_answer)
         # elif user == bot_owner:
         #     if command == 'mail':
         #         bot.register_next_step_handler(message, Get.mail)
