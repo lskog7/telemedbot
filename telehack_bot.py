@@ -17,7 +17,6 @@ class Call:
     def menu(user, chat_id=0, message_id=0):
         menu_keyboard = types.InlineKeyboardMarkup()
         menu_keyboard.add(types.InlineKeyboardButton(text='Пройти тестирование', callback_data='new_test'))
-        menu_keyboard.add(types.InlineKeyboardButton(text='Результат тестирования', callback_data='result'))
         menu_keyboard.add(types.InlineKeyboardButton(text='Личная информация', callback_data='parameters'))
         menu_keyboard.add(types.InlineKeyboardButton(text='ᐱ', callback_data='roll_up'))
         q = emoji() + 'Выберите действие'
@@ -46,7 +45,7 @@ class Call:
     def new_test(user, chat_id=0, message_id=0):
         new_test_keyboard = types.InlineKeyboardMarkup()
         new_test_keyboard.add(types.InlineKeyboardButton(text='Начать тестирование', callback_data='start_test'))
-        q = emoji() + '<b>Тестирование</b>\n\nКакое-то описать'
+        q = emoji() + '<b>Тестирование</b>\n\n' + Texts.start_text()
         if not chat_id:
             new_test_keyboard.add(types.InlineKeyboardButton(text='ᐱ', callback_data='roll_up'))
             bot.send_message(user, q, parse_mode='HTML', reply_markup=new_test_keyboard)
@@ -57,9 +56,7 @@ class Call:
     @staticmethod
     def question(user, message, chat_id=0, q_type=0):
         message_id = message.message_id
-        print(message_id)
         q_text, q_answers = Requests.get_user_current_question_with_answers(user)
-        print(q_text, q_answers)
         question_keyboard = types.InlineKeyboardMarkup()
         if q_answers == 0:
             question_keyboard.add(types.InlineKeyboardButton(text='Да', callback_data='yes'),types.InlineKeyboardButton(text='Нет', callback_data='no'))
@@ -74,13 +71,11 @@ class Call:
                 bot.send_message(user, q_text, parse_mode='HTML', reply_markup=question_keyboard)
             bot.register_next_step_handler(message, Get.user_answer)
         elif q_answers == -1:
-            print(1111)
-            #Call.result(user)
+            Call.menu(user)
         elif q_answers == -5:
-            print(1111)
-            bot.edit_message_text('финиш', chat_id, message_id)
-            print(Requests.get_user_result(user))
-            #Call.result(user)
+            question_keyboard.add(types.InlineKeyboardButton(text='ᐸ', callback_data='come_back'))
+            q_result_text = Texts.result_text(Requests.get_user_result(user))
+            bot.edit_message_text(q_result_text, chat_id, message_id, reply_markup=question_keyboard)
         elif q_answers == -2:
             print(-2)
         else:
@@ -264,9 +259,6 @@ def callback_worker(call):
             Call.question(user, call.message, chat_id)
         else:
             Call.question(user, call.message, chat_id)
-    elif call.data == 'result':
-        bot.delete_message(chat_id, message_id)
-    #     Call.result()
     elif call.data == 'parameters':
         Call.edit_parameters(user, chat_id, message_id)
     elif call.data == 'yes':
@@ -321,9 +313,6 @@ def commander(message: Message):
             Call.edit_parameters(user)
         elif command == 'test':
             Call.new_test(user)
-        elif command == 'results':
-            pass
-            # Call.result()
         elif command == 'botinfo':
             bot.delete_message(message.chat.id, message.message_id)
             Call.bot_info(user)
