@@ -357,13 +357,13 @@ if __name__ == '__main__':
     # Requests.get_user_name(bot_owner)
     bot.enable_save_next_step_handlers(delay=5)
     bot.load_next_step_handlers()
-    bot.polling(none_stop=True)
+    # bot.polling(none_stop=True)
     # bot.infinity_polling()
-    # while True:
-    #     try:
-    #         bot.polling(none_stop=True)
-    #     except:
-    #         sleep(1)
+    while True:
+        try:
+            bot.polling(none_stop=True)
+        except:
+            sleep(0.5)
 
 
     # bot.set_chat_menu_button()
