@@ -354,9 +354,10 @@ class Requests:
             num_questions = len(current_table.select())
 
             # Получаем текст вопроса
-            q = current_table.Select().where(current_table.id == current_question)
+            q = current_table.select().where(current_table.id == current_question)
             question_text = q[0].text
             question_type = q[0].type
+            print(question_text, question_type)
             # Выбираем какой у нас тип вопроса
             if question_type == 0:
                 return question_text, 0
