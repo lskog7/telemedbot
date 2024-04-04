@@ -229,7 +229,6 @@ class Requests:
                 return question_text, 0
             elif question_type == 1:
                 # Получаем ответы на вопрос
-                print(111111, current_table.__name__, type(current_table))
                 q4 = Answers.select().where(Answers.qtable == current_table.__name__.lower(), Answers.qid == current_question)
                 ans = []
                 for item in q4:
@@ -266,6 +265,7 @@ class Requests:
             #     q.qtables = ""
             q.qtables = result
             q.curqtable = result[:2]
+            q.curq = 1
             q.save()
 
             # Заново узнаем номер текущей таблицы
@@ -278,7 +278,7 @@ class Requests:
             current_question = q[0].curq
 
             # Получаем текст вопроса
-            q = current_table.Select().where(current_table.id == current_question)
+            q = current_table.select().where(current_table.id == current_question)
             question_text = q[0].text
             question_type = q[0].type
             # Выбираем какой у нас тип вопроса
@@ -286,7 +286,7 @@ class Requests:
                 return question_text, 0
             elif question_type == 1:
                 # Получаем ответы на вопрос
-                q4 = Answers.select().where(Answers.qtable == current_table, Answers.qid == current_question)
+                q4 = Answers.select().where(Answers.qtable == current_table.__name__.lower(), Answers.qid == current_question)
                 ans = []
                 for item in q4:
                     ans.append(item.answer)
@@ -316,7 +316,7 @@ class Requests:
                 return question_text, 0
             elif question_type == 1:
                 # Получаем ответы на вопрос
-                q4 = Answers.select().where(Answers.qtable == current_table, Answers.qid == current_question)
+                q4 = Answers.select().where(Answers.qtable == current_table.__name__.lower(), Answers.qid == current_question)
                 ans = []
                 for item in q4:
                     ans.append(item.answer)
@@ -341,6 +341,7 @@ class Requests:
             else:
                 q.qtables = ""
             q.curqtable = result[:2]
+            q.curq = 1
             q.save()
 
             # Заново узнаем номер текущей таблицы
@@ -351,19 +352,19 @@ class Requests:
             current_table_id = q[0].curqtable  # Возвращает string вида "00"
             current_table = Requests.tables_dict[current_table_id]
             current_question = q[0].curq
-            num_questions = len(current_table.select())
 
+            print(123, current_question, current_table, current_table_id)
             # Получаем текст вопроса
             q = current_table.select().where(current_table.id == current_question)
             question_text = q[0].text
             question_type = q[0].type
-            print(question_text, question_type)
+
             # Выбираем какой у нас тип вопроса
             if question_type == 0:
                 return question_text, 0
             elif question_type == 1:
                 # Получаем ответы на вопрос
-                q4 = Answers.select().where(Answers.qtable == current_table, Answers.qid == current_question)
+                q4 = Answers.select().where(Answers.qtable == current_table.__name__.lower(), Answers.qid == current_question)
                 ans = []
                 for item in q4:
                     ans.append(item.answer)

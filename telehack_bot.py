@@ -76,6 +76,10 @@ class Call:
         elif q_answers == -1:
             print(1111)
             #Call.result(user)
+        elif q_answers == -5:
+            print(1111)
+            print(Requests.get_user_result(user))
+            #Call.result(user)
         elif q_answers == -2:
             print(-2)
         else:
