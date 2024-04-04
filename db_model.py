@@ -163,5 +163,5 @@ class Useranswers(BaseModel):
     table_id = TextField()  # Название таблицы к которой принадлежит вопрос
     question_id = IntegerField()  # Айди вопроса из соответствующей таблицы
     answer_id = IntegerField()  # Айди ответа
-    score = IntegerField(default=0)  # Счет, подтягивается из ответа
+    score = TextField(default=0)  # Счет, подтягивается из ответа
     free_answer = TextField(default=0)  # В это поле записывается свободный ответ

@@ -175,6 +175,15 @@ class Requests:
             return user_current_test
 
     @staticmethod
+    def get_current_test(telegram_id):
+        user_id = Requests.get_user_id(telegram_id)
+        q = Tests.select().where(Tests.user_id == user_id, Tests.status == 0)
+        if len(q) == 0:
+            return 0
+        else:
+            return 1
+
+    @staticmethod
     def get_user_id(telegram_id):
         # Мы узнаем, а что за юзер у нас отвечает
         q = Users.select().where(Users.telegram_id == telegram_id)
@@ -203,7 +212,7 @@ class Requests:
             current_table_id = "00"
         current_table = Requests.tables_dict[current_table_id]
         current_question = q[0].curq
-        print(current_table)
+        print(1, current_table)
         num_questions = len(current_table.select())
 
         # Смотрим на наличие нулей (это значит, что показатели стандартные)
@@ -267,7 +276,6 @@ class Requests:
             current_table_id = q[0].curqtable  # Возвращает string вида "00"
             current_table = Requests.tables_dict[current_table_id]
             current_question = q[0].curq
-            num_questions = len(current_table.select())
 
             # Получаем текст вопроса
             q = current_table.Select().where(current_table.id == current_question)
@@ -411,7 +419,7 @@ class Requests:
             # Записываем ответ в таблицу Useranswers
             query3 = Useranswers(user_id=user_id,
                                  test_id=current_test,
-                                 table_id=current_table,
+                                 table_id=current_table.__name__.lower(),
                                  question_id=current_question,
                                  answer_id=answer_id,
                                  score=answer_score)
@@ -437,7 +445,7 @@ class Requests:
             # Записываем ответ в таблицу Useranswers
             query3 = Useranswers(user_id=user_id,
                                  test_id=current_test,
-                                 table_id=current_table,
+                                 table_id=current_table.__name__.lower(),
                                  question_id=current_question,
                                  answer_id=answer_id,
                                  score=answer_score)
@@ -461,7 +469,7 @@ class Requests:
             # Записываем ответ в таблицу Useranswers
             query3 = Useranswers(user_id=user_id,
                                  test_id=current_test,
-                                 table_id=current_table,
+                                 table_id=current_table.__name__.lower(),
                                  question_id=current_question,
                                  answer_id=answer_id,
                                  free_answer=answer)
@@ -676,14 +684,14 @@ class Requests:
         query.save()
 
     # -----------------------Возвращает пол пользователя------------------#
-    @staticmethod
-    def get_current_test(telegram_id):
-        query = Users.get(Users.telegram_id == telegram_id)
-        current_test = query.current_test
-        if current_test < 0:
-            return -1
-        else:
-            return current_test
+    # @staticmethod
+    # def get_current_test(telegram_id):
+    #     query = Users.get(Users.telegram_id == telegram_id)
+    #     current_test = query.current_test
+    #     if current_test < 0:
+    #         return -1
+    #     else:
+    #         return current_test
 
     # -----------------------Возвращает пол пользователя------------------#
     @staticmethod
@@ -696,18 +704,18 @@ class Requests:
             return current_question
 
     # -----------------------Возвращает пол пользователя------------------#
-    @staticmethod
-    def get_current_test_and_question(telegram_id):
-        current_test = Requests.get_current_test(telegram_id)
-        if current_test == -1:
-            return -1
-        current_question = Requests.get_current_question(telegram_id)
-        if current_question == -1:
-            return current_question
-        if current_test == 0:
-            return 0
-        else:
-            if current_question == 0:
-                return current_test, 0
-            else:
-                return current_test, current_question
+    # @staticmethod
+    # def get_current_test_and_question(telegram_id):
+    #     current_test = Requests.get_current_test(telegram_id)
+    #     if current_test == -1:
+    #         return -1
+    #     current_question = Requests.get_current_question(telegram_id)
+    #     if current_question == -1:
+    #         return current_question
+    #     if current_test == 0:
+    #         return 0
+    #     else:
+    #         if current_question == 0:
+    #             return current_test, 0
+    #         else:
+    #             return current_test, current_question
